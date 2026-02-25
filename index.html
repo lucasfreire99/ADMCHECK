@@ -8,176 +8,154 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body { background:#0e1014; color:#fff; font-family:Segoe UI; padding:40px;}
-.card{background:#161a22;padding:25px;border-radius:12px;max-width:900px;margin:auto;}
-input{padding:8px;margin-right:10px;background:#222631;border:none;color:#fff;border-radius:6px;}
-button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;background:#5c8dff;color:#fff;}
-.section{margin-top:20px;color:#5c8dff;font-size:13px;}
-ul{list-style:none;padding:0;}
-li{padding:6px 0;}
-.completed{text-decoration:line-through;color:#777;}
-.progress-bar{height:6px;background:#222631;border-radius:10px;margin:15px 0;}
-.progress{height:100%;width:0%;background:#5c8dff;}
+body{background:#0e1014;color:#fff;font-family:Segoe UI;padding:40px}
+.card{background:#161a22;padding:25px;border-radius:12px;max-width:900px;margin:auto}
+input{padding:8px;margin-right:10px;background:#222631;border:none;color:#fff;border-radius:6px}
+button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;background:#5c8dff;color:#fff}
+ul{list-style:none;padding:0}
+li{padding:6px 0}
+.completed{text-decoration:line-through;color:#777}
+.progress-bar{height:6px;background:#222631;border-radius:10px;margin:15px 0}
+.progress{height:100%;width:0%;background:#5c8dff}
 </style>
 </head>
 
 <body>
+
 <div class="card">
 <h2>Checklist Admissional</h2>
 
-<input type="text" id="matricula" placeholder="Matrícula">
-<input type="text" id="nome" placeholder="Nome">
-<button id="btnCarregar">Carregar / Criar</button>
+<input id="matricula" placeholder="Matrícula">
+<input id="nome" placeholder="Nome">
+<button id="btn">Carregar / Criar</button>
 
 <div class="progress-bar">
 <div class="progress" id="progress"></div>
 </div>
 <div id="stats"></div>
 
-<div id="checklist"></div>
+<ul id="checklist"></ul>
 </div>
 
 <script>
 
-const SUPABASE_URL = "https://gqnazdvxvfvuakuaqwnz.supabase.co";
-const SUPABASE_KEY = "sb_publishable_Zs9RE_TW74gPk_mTwiWGMg_ICRRMek0";
-
-const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const sbClient = window.supabase.createClient(
+"https://gqnazdvxvfvuakuaqwnz.supabase.co",
+"sb_publishable_Zs9RE_TW74gPk_mTwiWGMg_ICRRMek0"
+);
 
 let employeeId = null;
 let documentos = [];
 
-document.getElementById("btnCarregar").addEventListener("click", carregarOuCriar);
+document.getElementById("btn").addEventListener("click", iniciar);
 
-async function carregarOuCriar() {
+async function iniciar(){
 
-    const matricula = document.getElementById("matricula").value.trim();
-    const nome = document.getElementById("nome").value.trim();
+const matricula = document.getElementById("matricula").value.trim();
+const nome = document.getElementById("nome").value.trim();
 
-    if (!matricula || !nome) {
-        alert("Informe matrícula e nome.");
-        return;
-    }
-
-    const { data: emp, error } = await client
-        .from('employees')
-        .select('*')
-        .eq('matricula', matricula);
-
-    if (error) {
-        console.error(error);
-        alert("Erro ao consultar funcionário.");
-        return;
-    }
-
-    if (emp.length === 0) {
-
-        const { data: novo, error: errNovo } = await client
-            .from('employees')
-            .insert([{ matricula, nome }])
-            .select();
-
-        if (errNovo) {
-            console.error(errNovo);
-            alert("Erro ao criar funcionário.");
-            return;
-        }
-
-        employeeId = novo[0].id;
-        await criarChecklistInicial();
-
-    } else {
-        employeeId = emp[0].id;
-        document.getElementById("nome").value = emp[0].nome;
-    }
-
-    await carregarChecklist();
+if(!matricula || !nome){
+alert("Informe matrícula e nome");
+return;
 }
 
-async function criarChecklistInicial() {
+const { data: emp } = await sbClient
+.from("employees")
+.select("*")
+.eq("matricula", matricula);
 
-    const { data: docs, error } = await client
-        .from('documents')
-        .select('id');
+if(emp.length === 0){
 
-    if (error) {
-        console.error(error);
-        return;
-    }
+const { data: novo } = await sbClient
+.from("employees")
+.insert([{ matricula, nome }])
+.select();
 
-    const inserts = docs.map(doc => ({
-        employee_id: employeeId,
-        document_id: doc.id,
-        entregue: false
-    }));
+employeeId = novo[0].id;
 
-    await client.from('employee_documents').insert(inserts);
+await criarChecklist();
+
+}else{
+
+employeeId = emp[0].id;
+document.getElementById("nome").value = emp[0].nome;
+
 }
 
-async function carregarChecklist() {
-
-    const { data, error } = await client
-        .from('employee_documents')
-        .select(`
-            id,
-            entregue,
-            documents (nome, categoria, subcategoria)
-        `)
-        .eq('employee_id', employeeId);
-
-    if (error) {
-        console.error(error);
-        return;
-    }
-
-    documentos = data;
-    render();
+await carregarChecklist();
 }
 
-function render() {
+async function criarChecklist(){
 
-    const container = document.getElementById("checklist");
-    container.innerHTML = "";
+const { data: docs } = await sbClient
+.from("documents")
+.select("id");
 
-    documentos.forEach(doc => {
+const inserts = docs.map(d => ({
+employee_id: employeeId,
+document_id: d.id,
+entregue: false
+}));
 
-        const li = document.createElement("li");
-
-        if (doc.entregue) li.classList.add("completed");
-
-        li.innerHTML = `
-            <input type="checkbox" ${doc.entregue ? "checked" : ""}
-            onchange="toggle('${doc.id}', ${doc.entregue})">
-            ${doc.documents.nome}
-        `;
-
-        container.appendChild(li);
-    });
-
-    atualizarProgresso();
+await sbClient.from("employee_documents").insert(inserts);
 }
 
-async function toggle(id, status) {
+async function carregarChecklist(){
 
-    await client
-        .from('employee_documents')
-        .update({ entregue: !status })
-        .eq('id', id);
+const { data } = await sbClient
+.from("employee_documents")
+.select("id, entregue, documents(nome)")
+.eq("employee_id", employeeId);
 
-    await carregarChecklist();
+documentos = data;
+render();
 }
 
-function atualizarProgresso() {
+function render(){
 
-    const total = documentos.length;
-    const concluidos = documentos.filter(d => d.entregue).length;
-    const perc = total === 0 ? 0 : (concluidos / total) * 100;
+const ul = document.getElementById("checklist");
+ul.innerHTML = "";
 
-    document.getElementById("progress").style.width = perc + "%";
-    document.getElementById("stats").innerText =
-        `${concluidos} de ${total} documentos concluídos`;
+documentos.forEach(doc => {
+
+const li = document.createElement("li");
+
+if(doc.entregue) li.classList.add("completed");
+
+li.innerHTML = `
+<input type="checkbox" ${doc.entregue ? "checked" : ""}
+onchange="toggle('${doc.id}', ${doc.entregue})">
+${doc.documents.nome}
+`;
+
+ul.appendChild(li);
+});
+
+atualizarProgresso();
+}
+
+async function toggle(id, status){
+
+await sbClient
+.from("employee_documents")
+.update({ entregue: !status })
+.eq("id", id);
+
+await carregarChecklist();
+}
+
+function atualizarProgresso(){
+
+const total = documentos.length;
+const concluidos = documentos.filter(d => d.entregue).length;
+const perc = total === 0 ? 0 : (concluidos/total)*100;
+
+document.getElementById("progress").style.width = perc+"%";
+document.getElementById("stats").innerText =
+`${concluidos} de ${total} documentos concluídos`;
 }
 
 </script>
+
 </body>
 </html>
