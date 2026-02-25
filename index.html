@@ -3,149 +3,197 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checklist Admissional - DP/RH</title>
+<title>Sistema Checklist Admissional RH</title>
 
 <style>
-:root {
-    --bg: #0e1014;
-    --card: #161a22;
-    --accent: #5c8dff;
-    --text: #e4e7ec;
-    --muted: #7b8496;
-    --danger: #ff5c7a;
+:root{
+--bg:#0e1014;
+--card:#161a22;
+--accent:#5c8dff;
+--text:#e4e7ec;
+--muted:#7b8496;
+--danger:#ff5c7a;
+--success:#27c47d;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Segoe UI', sans-serif;
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI;}
+
+body{
+background:var(--bg);
+color:var(--text);
+padding:30px;
 }
 
-body {
-    background: var(--bg);
-    color: var(--text);
-    padding: 40px 20px;
-    display: flex;
-    justify-content: center;
+.layout{
+display:grid;
+grid-template-columns:280px 1fr;
+gap:20px;
+max-width:1300px;
+margin:auto;
 }
 
-.container {
-    width: 100%;
-    max-width: 900px;
+.sidebar{
+background:var(--card);
+padding:20px;
+border-radius:12px;
+height:85vh;
+overflow-y:auto;
 }
 
-h1 {
-    margin-bottom: 25px;
-    font-weight: 500;
-    font-size: 22px;
+.sidebar h2{
+font-size:14px;
+margin-bottom:15px;
+color:var(--accent);
 }
 
-.card {
-    background: var(--card);
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+.funcionario-item{
+padding:8px;
+border-radius:8px;
+margin-bottom:6px;
+cursor:pointer;
+background:#222631;
+font-size:12px;
+display:flex;
+justify-content:space-between;
+align-items:center;
 }
 
-.input-group {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 20px;
+.funcionario-item:hover{
+background:#2a2f3b;
 }
 
-.input-group input {
-    flex: 1;
-    padding: 10px;
-    border-radius: 8px;
-    border: none;
-    background: #222631;
-    color: var(--text);
+.badge{
+padding:3px 6px;
+border-radius:6px;
+font-size:10px;
 }
 
-button {
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: none;
-    cursor: pointer;
-    font-size: 12px;
-    margin-right: 6px;
+.badge.success{background:var(--success);}
+.badge.progress{background:var(--accent);}
+
+.main{
+background:var(--card);
+padding:30px;
+border-radius:12px;
 }
 
-.primary { background: var(--accent); color: white; }
-.secondary { background: #222631; color: var(--muted); }
-.danger { background: var(--danger); color: white; }
-
-.section-title {
-    margin-top: 25px;
-    margin-bottom: 10px;
-    font-size: 13px;
-    color: var(--accent);
+h1{
+margin-bottom:20px;
+font-weight:500;
 }
 
-.sub-title {
-    margin-top: 18px;
-    margin-bottom: 6px;
-    font-size: 12px;
-    color: var(--muted);
+.input-group{
+display:grid;
+grid-template-columns:1fr 2fr;
+gap:10px;
+margin-bottom:15px;
 }
 
-ul { list-style: none; }
-
-li {
-    padding: 6px 0;
-    display: flex;
-    align-items: center;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+input{
+padding:10px;
+border-radius:8px;
+border:none;
+background:#222631;
+color:var(--text);
 }
 
-input[type="checkbox"] {
-    margin-right: 10px;
-    accent-color: var(--accent);
+.button-group{
+margin-bottom:20px;
 }
 
-.completed label {
-    text-decoration: line-through;
-    color: var(--muted);
+button{
+padding:8px 14px;
+border-radius:8px;
+border:none;
+cursor:pointer;
+font-size:12px;
+margin-right:6px;
 }
 
-.progress-bar {
-    height: 6px;
-    background: #222631;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 8px;
+.primary{background:var(--accent);color:white;}
+.success{background:var(--success);color:white;}
+.secondary{background:#222631;color:var(--muted);}
+.danger{background:var(--danger);color:white;}
+
+.progress-bar{
+height:6px;
+background:#222631;
+border-radius:10px;
+overflow:hidden;
+margin-bottom:8px;
 }
 
-.progress {
-    height: 100%;
-    width: 0%;
-    background: var(--accent);
-    transition: 0.3s;
+.progress{
+height:100%;
+width:0%;
+background:var(--accent);
+transition:0.3s;
 }
 
-.stats {
-    font-size: 12px;
-    color: var(--muted);
-    margin-bottom: 15px;
+.stats{
+font-size:12px;
+margin-bottom:20px;
+color:var(--muted);
+}
+
+.section-title{
+margin-top:25px;
+margin-bottom:10px;
+font-size:13px;
+color:var(--accent);
+}
+
+.sub-title{
+margin-top:18px;
+margin-bottom:6px;
+font-size:12px;
+color:var(--muted);
+}
+
+ul{list-style:none;}
+
+li{
+display:grid;
+grid-template-columns:25px 1fr;
+align-items:center;
+padding:6px 0;
+border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.completed label{
+text-decoration:line-through;
+color:var(--muted);
 }
 </style>
 </head>
 
 <body>
-<div class="container">
-<h1>📋 Checklist de Documentação Admissional</h1>
 
-<div class="card">
+<div class="layout">
+
+<div class="sidebar">
+<h2>📋 Funcionários</h2>
+<div id="listaFuncionarios"></div>
+</div>
+
+<div class="main">
+
+<h1>Checklist Admissional</h1>
 
 <div class="input-group">
-    <input type="text" id="matricula" placeholder="Matrícula">
-    <input type="text" id="nome" placeholder="Nome do Colaborador">
-    <button class="primary" onclick="carregarFuncionario()">Carregar</button>
+<input type="text" id="matricula" placeholder="Matrícula">
+<input type="text" id="nome" placeholder="Nome do Colaborador">
+</div>
+
+<div class="button-group">
+<button class="primary" onclick="criarChecklist()">CRIAR</button>
+<button class="success" onclick="salvarChecklist()">SALVAR</button>
+<button class="secondary" onclick="carregarChecklist()">CARREGAR</button>
+<button class="danger" onclick="resetarChecklist()">RESETAR</button>
 </div>
 
 <div class="progress-bar">
-    <div class="progress" id="progress"></div>
+<div class="progress" id="progress"></div>
 </div>
 <div class="stats" id="stats"></div>
 
@@ -154,14 +202,13 @@ input[type="checkbox"] {
 <br>
 <button class="primary" onclick="copiarRelatorio()">Copiar Relatório</button>
 <button class="secondary" onclick="exportarTXT()">Exportar .TXT</button>
-<button class="danger" onclick="resetarChecklist()">Resetar</button>
 
 </div>
 </div>
 
 <script>
 
-const estrutura = {
+const estrutura = { /* mesma estrutura anterior */
 "🔹 DOCUMENTOS OBRIGATÓRIOS":[
 "Currículo atualizado","01 Foto 3x4","CTPS Digital","RG – Frente e Verso","CPF",
 "Título de Eleitor","Comprovante de Residência Atual",
@@ -194,119 +241,173 @@ const estrutura = {
 }
 };
 
-let checklist = {};
+let checklistAtual=null;
 
-function gerarChecklistBase(){
-    let base = {};
-    Object.values(estrutura).forEach(sec=>{
-        if(Array.isArray(sec)){
-            sec.forEach(item=>base[item]=false);
-        } else {
-            Object.values(sec).forEach(sub=>{
-                sub.forEach(item=>base[item]=false);
-            });
-        }
-    });
-    return base;
+function gerarBase(){
+let base={};
+Object.values(estrutura).forEach(sec=>{
+if(Array.isArray(sec)){
+sec.forEach(i=>base[i]=false);
+}else{
+Object.values(sec).forEach(sub=>{
+sub.forEach(i=>base[i]=false);
+});
+}
+});
+return base;
 }
 
-function render(){
-    const container = document.getElementById("checklist");
-    container.innerHTML="";
-
-    Object.entries(estrutura).forEach(([sec,conteudo])=>{
-        container.innerHTML+=`<div class="section-title">${sec}</div>`;
-        if(Array.isArray(conteudo)){
-            criarLista(conteudo,container);
-        } else {
-            Object.entries(conteudo).forEach(([sub,itens])=>{
-                container.innerHTML+=`<div class="sub-title">${sub}</div>`;
-                criarLista(itens,container);
-            });
-        }
-    });
-    atualizarProgresso();
+function criarChecklist(){
+checklistAtual=gerarBase();
+render();
 }
 
-function criarLista(itens,container){
-    const ul=document.createElement("ul");
-    itens.forEach(item=>{
-        const li=document.createElement("li");
-        if(checklist[item]) li.classList.add("completed");
-        li.innerHTML=`
-        <input type="checkbox" ${checklist[item]?"checked":""}
-        onchange="toggle('${item.replace(/'/g,"")}')">
-        <label>${item}</label>`;
-        ul.appendChild(li);
-    });
-    container.appendChild(ul);
+function salvarChecklist(){
+const matricula=document.getElementById("matricula").value;
+const nome=document.getElementById("nome").value;
+
+if(!matricula || !checklistAtual) return alert("Crie checklist e informe matrícula.");
+
+localStorage.setItem("func_"+matricula,
+JSON.stringify({nome,checklist:checklistAtual}));
+
+alert("Salvo com sucesso.");
+atualizarListaFuncionarios();
 }
 
-function toggle(item){
-    checklist[item]=!checklist[item];
-    salvar();
+function carregarChecklist(){
+const matricula=document.getElementById("matricula").value;
+if(!matricula) return alert("Informe matrícula.");
+
+const dados=localStorage.getItem("func_"+matricula);
+if(!dados) return alert("Registro não encontrado.");
+
+const obj=JSON.parse(dados);
+document.getElementById("nome").value=obj.nome;
+checklistAtual=obj.checklist;
+render();
 }
 
-function atualizarProgresso(){
-    const total=Object.keys(checklist).length;
-    const concluidos=Object.values(checklist).filter(v=>v).length;
-    const perc=(concluidos/total)*100;
-    document.getElementById("progress").style.width=perc+"%";
-    document.getElementById("stats").innerText=
-    `${concluidos} de ${total} documentos concluídos`;
+function atualizarListaFuncionarios(){
+const container=document.getElementById("listaFuncionarios");
+container.innerHTML="";
+
+Object.keys(localStorage).forEach(key=>{
+if(key.startsWith("func_")){
+const matricula=key.replace("func_","");
+const obj=JSON.parse(localStorage.getItem(key));
+const progresso=calcularProgresso(obj.checklist);
+
+const div=document.createElement("div");
+div.className="funcionario-item";
+div.onclick=()=>{
+document.getElementById("matricula").value=matricula;
+carregarChecklist();
+};
+
+div.innerHTML=`
+<span>${obj.nome}</span>
+<span class="badge ${progresso===100?'success':'progress'}">
+${progresso===100?'100%':'Em andamento'}
+</span>
+`;
+
+container.appendChild(div);
+}
+});
 }
 
-function salvar(){
-    const matricula=document.getElementById("matricula").value;
-    const nome=document.getElementById("nome").value;
-    if(!matricula) return;
-    localStorage.setItem("func_"+matricula,
-    JSON.stringify({nome,checklist}));
-    render();
-}
-
-function carregarFuncionario(){
-    const matricula=document.getElementById("matricula").value;
-    if(!matricula) return alert("Informe a matrícula.");
-    const dados=localStorage.getItem("func_"+matricula);
-    if(dados){
-        const obj=JSON.parse(dados);
-        document.getElementById("nome").value=obj.nome;
-        checklist=obj.checklist;
-    } else {
-        checklist=gerarChecklistBase();
-    }
-    render();
-}
-
-function gerarRelatorio(){
-    const matricula=document.getElementById("matricula").value;
-    const nome=document.getElementById("nome").value;
-    let texto=`CHECKLIST ADMISSIONAL\n\nMatrícula: ${matricula}\nNome: ${nome}\n\n`;
-    Object.entries(checklist).forEach(([doc,status])=>{
-        texto+=`[${status?"OK":"PENDENTE"}] ${doc}\n`;
-    });
-    return texto;
-}
-
-function copiarRelatorio(){
-    navigator.clipboard.writeText(gerarRelatorio());
-    alert("Relatório copiado!");
-}
-
-function exportarTXT(){
-    const blob=new Blob([gerarRelatorio()],{type:"text/plain"});
-    const link=document.createElement("a");
-    link.href=URL.createObjectURL(blob);
-    link.download="checklist_admissional.txt";
-    link.click();
+function calcularProgresso(check){
+const total=Object.keys(check).length;
+const ok=Object.values(check).filter(v=>v).length;
+return Math.round((ok/total)*100);
 }
 
 function resetarChecklist(){
-    checklist=gerarChecklistBase();
-    salvar();
+checklistAtual=gerarBase();
+render();
 }
 
+function render(){
+if(!checklistAtual) return;
+
+const container=document.getElementById("checklist");
+container.innerHTML="";
+
+Object.entries(estrutura).forEach(([sec,conteudo])=>{
+container.innerHTML+=`<div class="section-title">${sec}</div>`;
+if(Array.isArray(conteudo)){
+criarLista(conteudo,container);
+}else{
+Object.entries(conteudo).forEach(([sub,itens])=>{
+container.innerHTML+=`<div class="sub-title">${sub}</div>`;
+criarLista(itens,container);
+});
+}
+});
+
+atualizarProgresso();
+}
+
+function criarLista(itens,container){
+const ul=document.createElement("ul");
+itens.forEach(item=>{
+const li=document.createElement("li");
+if(checklistAtual[item]) li.classList.add("completed");
+li.innerHTML=`
+<input type="checkbox" ${checklistAtual[item]?"checked":""}
+onchange="toggle('${item.replace(/'/g,"")}')">
+<label>${item}</label>`;
+ul.appendChild(li);
+});
+container.appendChild(ul);
+}
+
+function toggle(item){
+checklistAtual[item]=!checklistAtual[item];
+render();
+}
+
+function atualizarProgresso(){
+const perc=calcularProgresso(checklistAtual);
+const barra=document.getElementById("progress");
+
+barra.style.width=perc+"%";
+barra.style.background=perc===100?"var(--success)":"var(--accent)";
+
+document.getElementById("stats").innerText=
+perc===100?"Checklist Concluído ✅":`${perc}% concluído`;
+}
+
+function gerarRelatorio(){
+const matricula=document.getElementById("matricula").value;
+const nome=document.getElementById("nome").value;
+
+let texto=`CHECKLIST ADMISSIONAL\n\nMatrícula: ${matricula}\nNome: ${nome}\n\n`;
+
+Object.entries(checklistAtual).forEach(([doc,status])=>{
+texto+=`[${status?"OK":"PENDENTE"}] ${doc}\n`;
+});
+
+return texto;
+}
+
+function copiarRelatorio(){
+navigator.clipboard.writeText(gerarRelatorio());
+alert("Copiado.");
+}
+
+function exportarTXT(){
+const blob=new Blob([gerarRelatorio()],{type:"text/plain"});
+const link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download="checklist_admissional.txt";
+link.click();
+}
+
+atualizarListaFuncionarios();
+
 </script>
+
 </body>
 </html>
