@@ -3,206 +3,38 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sistema Checklist Admissional RH</title>
-
-<style>
-:root{
---bg:#0e1014;
---card:#161a22;
---accent:#5c8dff;
---text:#e4e7ec;
---muted:#7b8496;
---danger:#ff5c7a;
---success:#27c47d;
-}
-
-*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI;}
-
-body{
-background:var(--bg);
-color:var(--text);
-display:flex;
-height:100vh;
-overflow:hidden;
-}
-
-/* SIDEBAR FIXA */
-.sidebar{
-width:300px;
-background:var(--card);
-padding:20px;
-border-right:1px solid rgba(255,255,255,0.05);
-overflow-y:auto;
-}
-
-.sidebar h2{
-font-size:14px;
-margin-bottom:15px;
-color:var(--accent);
-}
-
-.funcionario-item{
-padding:10px;
-border-radius:8px;
-margin-bottom:8px;
-cursor:pointer;
-background:#222631;
-font-size:12px;
-}
-
-.funcionario-item:hover{
-background:#2a2f3b;
-}
-
-.func-nome{
-font-weight:500;
-font-size:13px;
-}
-
-.func-matricula{
-font-size:11px;
-color:var(--muted);
-}
-
-.badge{
-margin-top:5px;
-display:inline-block;
-padding:3px 6px;
-border-radius:6px;
-font-size:10px;
-}
-
-.badge.success{background:var(--success);}
-.badge.progress{background:var(--accent);}
-
-/* ÁREA PRINCIPAL */
-.main{
-flex:1;
-overflow-y:auto;
-padding:40px;
-}
-
-.main-content{
-max-width:1000px;
-margin:auto;
-}
-
-h1{
-margin-bottom:25px;
-font-weight:500;
-}
-
-.input-group{
-display:grid;
-grid-template-columns:1fr 2fr;
-gap:10px;
-margin-bottom:15px;
-}
-
-input{
-padding:10px;
-border-radius:8px;
-border:none;
-background:#222631;
-color:var(--text);
-}
-
-.button-group{
-margin-bottom:20px;
-}
-
-button{
-padding:8px 14px;
-border-radius:8px;
-border:none;
-cursor:pointer;
-font-size:12px;
-margin-right:6px;
-}
-
-.primary{background:var(--accent);color:white;}
-.success{background:var(--success);color:white;}
-.secondary{background:#222631;color:var(--muted);}
-.danger{background:var(--danger);color:white;}
-
-.progress-bar{
-height:6px;
-background:#222631;
-border-radius:10px;
-overflow:hidden;
-margin-bottom:8px;
-}
-
-.progress{
-height:100%;
-width:0%;
-background:var(--accent);
-transition:0.3s;
-}
-
-.stats{
-font-size:12px;
-margin-bottom:20px;
-color:var(--muted);
-}
-
-.section-title{
-margin-top:25px;
-margin-bottom:10px;
-font-size:13px;
-color:var(--accent);
-}
-
-.sub-title{
-margin-top:18px;
-margin-bottom:6px;
-font-size:12px;
-color:var(--muted);
-}
-
-ul{list-style:none;}
-
-li{
-display:grid;
-grid-template-columns:25px 1fr;
-align-items:center;
-padding:6px 0;
-border-bottom:1px solid rgba(255,255,255,0.05);
-}
-
-.completed label{
-text-decoration:line-through;
-color:var(--muted);
-}
-</style>
+<title>Checklist Admissional RH</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
+<!-- SIDEBAR -->
 <div class="sidebar">
-<h2>📋 Funcionários Cadastrados</h2>
-<div id="listaFuncionarios"></div>
+    <h2>📋 Funcionários Cadastrados</h2>
+    <div id="listaFuncionarios"></div>
 </div>
 
+<!-- ÁREA PRINCIPAL -->
 <div class="main">
 <div class="main-content">
 
 <h1>Checklist Admissional</h1>
 
 <div class="input-group">
-<input type="text" id="matricula" placeholder="Matrícula">
-<input type="text" id="nome" placeholder="Nome do Colaborador">
+    <input type="text" id="matricula" placeholder="Matrícula">
+    <input type="text" id="nome" placeholder="Nome do Colaborador">
 </div>
 
 <div class="button-group">
-<button class="primary" onclick="criarChecklist()">CRIAR</button>
-<button class="success" onclick="salvarChecklist()">SALVAR</button>
-<button class="secondary" onclick="carregarChecklist()">CARREGAR</button>
-<button class="danger" onclick="resetarChecklist()">RESETAR</button>
+    <button class="primary" onclick="criarChecklist()">CRIAR</button>
+    <button class="success" onclick="salvarChecklist()">SALVAR</button>
+    <button class="secondary" onclick="carregarChecklist()">CARREGAR</button>
+    <button class="danger" onclick="resetarChecklist()">RESETAR</button>
 </div>
 
 <div class="progress-bar">
-<div class="progress" id="progress"></div>
+    <div class="progress" id="progress"></div>
 </div>
 <div class="stats" id="stats"></div>
 
@@ -215,208 +47,18 @@ color:var(--muted);
 </div>
 </div>
 
-<script>
+<!-- MODAL -->
+<div id="modalOverlay" class="modal-overlay">
+  <div class="modal-box">
+      <h3>Excluir Funcionário</h3>
+      <p id="modalTexto"></p>
+      <div class="modal-actions">
+          <button class="secondary" onclick="fecharModal()">Cancelar</button>
+          <button class="danger" onclick="confirmarExclusao()">Confirmar Exclusão</button>
+      </div>
+  </div>
+</div>
 
-const estrutura = { /* mesma estrutura anterior */
-"🔹 DOCUMENTOS OBRIGATÓRIOS":[
-"Currículo atualizado","01 Foto 3x4","CTPS Digital","RG – Frente e Verso","CPF",
-"Título de Eleitor","Comprovante de Residência Atual",
-"Certificado de Dispensa de Incorporação (Reservista)",
-"Cartão PIS + Consulta de Qualificação Cadastral",
-"Comprovante de Situação Cadastral do CPF",
-"Atestado de Antecedentes Criminais (Original)",
-"Conta Bancária – Bradesco ou Next",
-"Certificados de Cursos Profissionalizantes",
-"CNH (quando aplicável à função)",
-"Exame Toxicológico (para função motorista)",
-"Curso de Direção Defensiva (para função motorista)",
-"Curso de Primeiros Socorros (para função motorista)",
-"Cartão de Vacina","Atestado Médico Admissional"
-],
-"🔹 DOCUMENTOS OPCIONAIS / CONDICIONAIS":{
-"📚 Escolaridade":[
-"Ensino Fundamental","Ensino Médio","Ensino Superior",
-"Pós-Graduação","Mestrado","Doutorado"
-],
-"🏛 Registro Profissional":[
-"Registro Profissional (quando profissão regulamentada)",
-"Registro Profissional Pendente"
-],
-"👨‍👩‍👧‍👦 Dependentes":[
-"RG e CPF do Cônjuge","Certidão de Casamento / União Estável",
-"RG e CPF dos Filhos","Cartão de Vacina dos Filhos",
-"Declaração Escolar dos Filhos"
-]
-}
-};
-
-let checklistAtual=null;
-
-function gerarBase(){
-let base={};
-Object.values(estrutura).forEach(sec=>{
-if(Array.isArray(sec)){
-sec.forEach(i=>base[i]=false);
-}else{
-Object.values(sec).forEach(sub=>{
-sub.forEach(i=>base[i]=false);
-});
-}
-});
-return base;
-}
-
-function criarChecklist(){
-checklistAtual=gerarBase();
-render();
-}
-
-function salvarChecklist(){
-const matricula=document.getElementById("matricula").value;
-const nome=document.getElementById("nome").value;
-
-if(!matricula || !checklistAtual) return alert("Crie checklist e informe matrícula.");
-
-localStorage.setItem("func_"+matricula,
-JSON.stringify({nome,checklist:checklistAtual}));
-
-alert("Salvo com sucesso.");
-atualizarListaFuncionarios();
-}
-
-function carregarChecklist(){
-const matricula=document.getElementById("matricula").value;
-if(!matricula) return alert("Informe matrícula.");
-
-const dados=localStorage.getItem("func_"+matricula);
-if(!dados) return alert("Registro não encontrado.");
-
-const obj=JSON.parse(dados);
-document.getElementById("nome").value=obj.nome;
-checklistAtual=obj.checklist;
-render();
-}
-
-function atualizarListaFuncionarios(){
-const container=document.getElementById("listaFuncionarios");
-container.innerHTML="";
-
-Object.keys(localStorage).forEach(key=>{
-if(key.startsWith("func_")){
-const matricula=key.replace("func_","");
-const obj=JSON.parse(localStorage.getItem(key));
-const progresso=calcularProgresso(obj.checklist);
-
-const div=document.createElement("div");
-div.className="funcionario-item";
-div.onclick=()=>{
-document.getElementById("matricula").value=matricula;
-carregarChecklist();
-};
-
-div.innerHTML=`
-<span>${obj.nome}</span>
-<span class="badge ${progresso===100?'success':'progress'}">
-${progresso===100?'100%':'Em andamento'}
-</span>
-`;
-
-container.appendChild(div);
-}
-});
-}
-
-function calcularProgresso(check){
-const total=Object.keys(check).length;
-const ok=Object.values(check).filter(v=>v).length;
-return Math.round((ok/total)*100);
-}
-
-function resetarChecklist(){
-checklistAtual=gerarBase();
-render();
-}
-
-function render(){
-if(!checklistAtual) return;
-
-const container=document.getElementById("checklist");
-container.innerHTML="";
-
-Object.entries(estrutura).forEach(([sec,conteudo])=>{
-container.innerHTML+=`<div class="section-title">${sec}</div>`;
-if(Array.isArray(conteudo)){
-criarLista(conteudo,container);
-}else{
-Object.entries(conteudo).forEach(([sub,itens])=>{
-container.innerHTML+=`<div class="sub-title">${sub}</div>`;
-criarLista(itens,container);
-});
-}
-});
-
-atualizarProgresso();
-}
-
-function criarLista(itens,container){
-const ul=document.createElement("ul");
-itens.forEach(item=>{
-const li=document.createElement("li");
-if(checklistAtual[item]) li.classList.add("completed");
-li.innerHTML=`
-<input type="checkbox" ${checklistAtual[item]?"checked":""}
-onchange="toggle('${item.replace(/'/g,"")}')">
-<label>${item}</label>`;
-ul.appendChild(li);
-});
-container.appendChild(ul);
-}
-
-function toggle(item){
-checklistAtual[item]=!checklistAtual[item];
-render();
-}
-
-function atualizarProgresso(){
-const perc=calcularProgresso(checklistAtual);
-const barra=document.getElementById("progress");
-
-barra.style.width=perc+"%";
-barra.style.background=perc===100?"var(--success)":"var(--accent)";
-
-document.getElementById("stats").innerText=
-perc===100?"Checklist Concluído ✅":`${perc}% concluído`;
-}
-
-function gerarRelatorio(){
-const matricula=document.getElementById("matricula").value;
-const nome=document.getElementById("nome").value;
-
-let texto=`CHECKLIST ADMISSIONAL\n\nMatrícula: ${matricula}\nNome: ${nome}\n\n`;
-
-Object.entries(checklistAtual).forEach(([doc,status])=>{
-texto+=`[${status?"OK":"PENDENTE"}] ${doc}\n`;
-});
-
-return texto;
-}
-
-function copiarRelatorio(){
-navigator.clipboard.writeText(gerarRelatorio());
-alert("Copiado.");
-}
-
-function exportarTXT(){
-const blob=new Blob([gerarRelatorio()],{type:"text/plain"});
-const link=document.createElement("a");
-link.href=URL.createObjectURL(blob);
-link.download="checklist_admissional.txt";
-link.click();
-}
-
-atualizarListaFuncionarios();
-
-</script>
-
+<script src="script.js"></script>
 </body>
 </html>
