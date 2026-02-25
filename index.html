@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checklist Admissional - Supabase</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+body {
+    background: #0e1014;
+    color: #e4e7ec;
+    font-family: Segoe UI;
+    padding: 40px;
+}
+
+.container { max-width: 1000px; margin: auto; }
+
+.card {
+    background: #161a22;
+    padding: 25px;
+    border-radius: 12px;
+}
+
+input {
+    padding: 8px;
+    margin-right: 10px;
+    background: #222631;
+    border: none;
+    color: white;
+    border-radius: 6px;
+}
+
+button {
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+.primary { background: #5c8dff; color: white; }
+.secondary { background: #222631; color: #ccc; }
+
+.section { margin-top: 20px; color: #5c8dff; font-size: 13px; }
+ul { list-style: none; padding: 0; }
+li { padding: 6px 0; }
+.completed { text-decoration: line-through; color: #777; }
+
+.progress-bar {
+    height: 6px;
+    background: #222631;
+    border-radius: 10px;
+    margin: 15px 0;
+}
+
+.progress {
+    height: 100%;
+    width: 0%;
+    background: #5c8dff;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+<h2>📋 Checklist Admissional (Online)</h2>
+
+<div class="card">
+
+<input type="text" id="matricula" placeholder="Matrícula">
+<input type="text" id="nome" placeholder="Nome">
+<button class="primary" onclick="carregarOuCriar()">Carregar / Criar</button>
+
+<div class="progress-bar">
+<div class="progress" id="progress"></div>
+</div>
+<div id="stats"></div>
+
+<div id="checklist"></div>
+
+<br>
+<button class="secondary" onclick="exportarTXT()">Exportar TXT</button>
+
+</div>
+</div>
+
+<script>
+
+// 🔗 CONEXÃO SUPABASE
+const supabase = window.supabase.createClient(
+'https://gqnazdvxvfvuakuaqwnz.supabase.co',
+'sb_publishable_Zs9RE_TW74gPk_mTwiWGMg_ICRRMek0'
+);
+
+let employeeId = null;
+let documentos = [];
+
+async function carregarOuCriar() {
+    const matricula = document.getElementById("matricula").value;
+    const nome = document.getElementById("nome").value;
+
+    if (!matricula || !nome) {
+        alert("Informe matrícula e nome.");
+        return;
+    }
+
+    // Verifica se existe funcionário
+    let { data: emp } = await supabase
+        .from('employees')
+        .select('*')
+        .eq('matricula', matricula)
+        .single();
+
+    if (!emp) {
+        // Cria funcionário
+        const { data: novo } = await supabase
+            .from('employees')
+            .insert([{ matricula, nome }])
+            .select()
+            .single();
+
+        employeeId = novo.id;
+
+        await criarChecklistInicial();
+    } else {
+        employeeId = emp.id;
+        document.getElementById("nome").value = emp.nome;
+    }
+
+    await carregarChecklist();
+}
+
+async function criarChecklistInicial() {
+    const { data: docs } = await supabase
+        .from('documents')
+        .select('id');
+
+    const inserts = docs.map(doc => ({
+        employee_id: employeeId,
+        document_id: doc.id,
+        entregue: false
+    }));
+
+    await supabase.from('employee_documents').insert(inserts);
+}
+
+async function carregarChecklist() {
+
+    const { data } = await supabase
+        .from('employee_documents')
+        .select(`
+            id,
+            entregue,
+            documents (
+                nome,
+                categoria,
+                subcategoria
+            )
+        `)
+        .eq('employee_id', employeeId);
+
+    documentos = data;
+    render();
+}
+
+function render() {
+    const container = document.getElementById("checklist");
+    container.innerHTML = "";
+
+    const agrupado = {};
+
+    documentos.forEach(doc => {
+        const cat = doc.documents.categoria;
+        const sub = doc.documents.subcategoria || "GERAL";
+
+        if (!agrupado[cat]) agrupado[cat] = {};
+        if (!agrupado[cat][sub]) agrupado[cat][sub] = [];
+        agrupado[cat][sub].push(doc);
+    });
+
+    Object.entries(agrupado).forEach(([cat, subs]) => {
+        container.innerHTML += `<div class="section">${cat}</div>`;
+
+        Object.entries(subs).forEach(([sub, docs]) => {
+            if (sub !== "GERAL")
+                container.innerHTML += `<div style="color:#777;font-size:12px">${sub}</div>`;
+
+            const ul = document.createElement("ul");
+
+            docs.forEach(doc => {
+                const li = document.createElement("li");
+                if (doc.entregue) li.classList.add("completed");
+
+                li.innerHTML = `
+                <input type="checkbox" ${doc.entregue ? "checked" : ""}
+                onchange="toggle('${doc.id}', ${doc.entregue})">
+                ${doc.documents.nome}`;
+
+                ul.appendChild(li);
+            });
+
+            container.appendChild(ul);
+        });
+    });
+
+    atualizarProgresso();
+}
+
+async function toggle(id, status) {
+    await supabase
+        .from('employee_documents')
+        .update({ entregue: !status })
+        .eq('id', id);
+
+    await carregarChecklist();
+}
+
+function atualizarProgresso() {
+    const total = documentos.length;
+    const concluidos = documentos.filter(d => d.entregue).length;
+    const perc = (concluidos / total) * 100;
+
+    document.getElementById("progress").style.width = perc + "%";
+    document.getElementById("stats").innerText =
+        `${concluidos} de ${total} documentos concluídos`;
+}
+
+function exportarTXT() {
+    const matricula = document.getElementById("matricula").value;
+    const nome = document.getElementById("nome").value;
+
+    let texto = `CHECKLIST ADMISSIONAL\n\nMatrícula: ${matricula}\nNome: ${nome}\n\n`;
+
+    documentos.forEach(doc => {
+        texto += `[${doc.entregue ? "OK" : "PENDENTE"}] ${doc.documents.nome}\n`;
+    });
+
+    const blob = new Blob([texto], { type: "text/plain" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "checklist_admissional.txt";
+    link.click();
+}
+
+</script>
+</body>
+</html>
