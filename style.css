@@ -19,7 +19,7 @@ body {
 
 /* Sidebar */
 .sidebar {
-    width: 300px;
+    width: 320px;
     background-color: #1a1e24;
     border-right: 1px solid #2a2f38;
     display: flex;
@@ -33,7 +33,46 @@ body {
     font-weight: 500;
     padding: 0 20px 20px 20px;
     border-bottom: 1px solid #2a2f38;
-    margin-bottom: 20px;
+    margin-bottom: 15px;
+}
+
+/* Search */
+.search-container {
+    position: relative;
+    padding: 0 15px 15px 15px;
+    border-bottom: 1px solid #2a2f38;
+    margin-bottom: 15px;
+}
+
+.search-input {
+    width: 100%;
+    background-color: #252b33;
+    border: 1px solid #363e48;
+    border-radius: 20px;
+    padding: 10px 35px 10px 15px;
+    color: #e0e0e0;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #4f9eff;
+    background-color: #2f3640;
+}
+
+.search-input::placeholder {
+    color: #6b7a8f;
+}
+
+.search-icon {
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6b7a8f;
+    font-size: 0.9rem;
+    pointer-events: none;
 }
 
 .funcionarios-lista {
@@ -69,12 +108,21 @@ body {
     color: #ffffff;
     font-weight: 600;
     font-size: 0.95rem;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .funcionario-nome {
     color: #9aa5b5;
     font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.funcionario-cargo {
+    color: #6b7a8f;
+    font-size: 0.75rem;
+    margin-top: 2px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
