@@ -72,6 +72,17 @@ function salvarFuncionarios() {
     localStorage.setItem('admcheck_funcionarios', JSON.stringify(funcionarios));
 }
 
+// Função para criar checklist vazio
+function criarChecklistVazio() {
+    const checklist = {};
+    for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
+        itens.forEach(item => {
+            checklist[item] = false;
+        });
+    }
+    return checklist;
+}
+
 // Funções de renderização
 function renderizarSidebar() {
     const lista = document.getElementById('funcionariosLista');
@@ -105,7 +116,7 @@ function renderizarChecklist() {
     container.innerHTML = '';
 
     if (!funcionarioSelecionado || !funcionarios[funcionarioSelecionado]) {
-        container.innerHTML = '<p style="color: #6b7a8f; text-align: center;">Selecione um funcionário para visualizar o checklist</p>';
+        container.innerHTML = '<p style="color: #6b7a8f; text-align: center; padding: 40px;">Selecione um funcionário para visualizar o checklist</p>';
         return;
     }
 
@@ -129,7 +140,7 @@ function renderizarChecklist() {
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.id = `check_${item.replace(/\s+/g, '_')}`;
+            checkbox.id = `check_${item.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
             checkbox.checked = checklist[item] || false;
             checkbox.onchange = () => atualizarStatusAposMudanca();
 
@@ -160,7 +171,7 @@ function criarFuncionario() {
     funcionarios[id] = {
         matricula,
         nome,
-        checklist: {}
+        checklist: criarChecklistVazio() // Agora cria o checklist vazio
     };
 
     salvarFuncionarios();
@@ -189,9 +200,10 @@ function salvarChecklist() {
     const funcionario = funcionarios[funcionarioSelecionado];
     const checklist = {};
 
+    // Pega todos os itens do checklist atual
     for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
         itens.forEach(item => {
-            const checkbox = document.getElementById(`check_${item.replace(/\s+/g, '_')}`);
+            const checkbox = document.getElementById(`check_${item.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
             if (checkbox) {
                 checklist[item] = checkbox.checked;
             }
@@ -211,12 +223,13 @@ function atualizarStatusAposMudanca() {
 
 // Funções de status
 function calcularStatus(checklist) {
-    if (!checklist || Object.keys(checklist).length === 0) return 0;
+    if (!checklist) return 0;
+    
+    const itens = Object.values(checklist);
+    if (itens.length === 0) return 0;
 
-    const total = Object.keys(checklist).length;
-    const marcados = Object.values(checklist).filter(v => v).length;
-
-    return total > 0 ? Math.round((marcados / total) * 100) : 0;
+    const marcados = itens.filter(v => v).length;
+    return Math.round((marcados / itens.length) * 100);
 }
 
 // Funções de exportação
