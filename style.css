@@ -60,13 +60,23 @@ align-items:center;
 .func-matricula{font-size:11px;color:var(--muted);}
 
 .badge{
-padding:3px 6px;
-border-radius:6px;
-font-size:10px;
+width:12px;
+height:12px;
+border-radius:50%;
+display:inline-block;
 }
 
-.badge.success{background:var(--success);}
-.badge.progress{background:var(--accent);}
+.badge.success{
+background:var(--success);
+}
+
+.badge.progress{
+background:var(--accent);
+}
+
+.badge.empty{
+background:var(--danger);
+}
 
 .btn-excluir{
 background:var(--danger);
