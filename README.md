@@ -164,7 +164,7 @@ Checklist sempre inicia vazio (todos false)
 
 📁 Estrutura de Dados
 javascript
-`{
+{
   "ID_UNICO": {
     matricula: "123",
     nome: "João Silva",
@@ -175,7 +175,7 @@ javascript
       // ... demais itens
     }
   }
-}`
+}
 
 🔧 Melhorias da Versão 2.0
 Funcionalidade	Descrição
