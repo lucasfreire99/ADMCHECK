@@ -1,64 +1,58 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checklist Admissional RH</title>
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMCHECK - Checklist Admissional</title>
+    <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <h2 class="sidebar-title">Funcionários</h2>
+            <div id="funcionariosLista" class="funcionarios-lista">
+                <!-- Lista dinâmica será renderizada aqui -->
+            </div>
+        </aside>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-    <h2>📋 Funcionários Cadastrados</h2>
-    <div id="listaFuncionarios"></div>
-</div>
+        <!-- Área Principal -->
+        <main class="main-content">
+            <!-- Cabeçalho com inputs e botões -->
+            <div class="header-actions">
+                <div class="input-group">
+                    <div class="input-row">
+                        <input type="text" id="matricula" placeholder="Matrícula" class="input-field">
+                        <input type="text" id="nome" placeholder="Nome completo" class="input-field">
+                    </div>
+                    <div class="button-row">
+                        <button onclick="criarFuncionario()" class="btn btn-primary">Criar</button>
+                        <button onclick="salvarChecklist()" class="btn btn-success">Salvar</button>
+                        <button onclick="exportarTxt()" class="btn btn-secondary">Exportar .txt</button>
+                        <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar Relatório</button>
+                    </div>
+                </div>
+            </div>
 
-<!-- ÁREA PRINCIPAL -->
-<div class="main">
-<div class="main-content">
+            <!-- Checklist -->
+            <div id="checklistContainer" class="checklist-container">
+                <!-- Checklist será renderizado dinamicamente -->
+            </div>
+        </main>
+    </div>
 
-<h1>Checklist Admissional</h1>
+    <!-- Modal de Confirmação -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Confirmar exclusão</h3>
+            <p class="modal-message">Tem certeza que deseja excluir este funcionário?</p>
+            <div class="modal-actions">
+                <button onclick="confirmarExclusao()" class="btn btn-danger">Confirmar</button>
+                <button onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
+            </div>
+        </div>
+    </div>
 
-<div class="input-group">
-    <input type="text" id="matricula" placeholder="Matrícula">
-    <input type="text" id="nome" placeholder="Nome do Colaborador">
-</div>
-
-<div class="button-group">
-    <button class="primary" onclick="criarChecklist()">CRIAR</button>
-    <button class="success" onclick="salvarChecklist()">SALVAR</button>
-    <button class="secondary" onclick="carregarChecklist()">CARREGAR</button>
-    <button class="danger" onclick="resetarChecklist()">RESETAR</button>
-</div>
-
-<div class="progress-bar">
-    <div class="progress" id="progress"></div>
-</div>
-<div class="stats" id="stats"></div>
-
-<div id="checklist"></div>
-
-<br>
-<button class="primary" onclick="copiarRelatorio()">Copiar Relatório</button>
-<button class="secondary" onclick="exportarTXT()">Exportar .TXT</button>
-
-</div>
-</div>
-
-<!-- MODAL -->
-<div id="modalOverlay" class="modal-overlay">
-  <div class="modal-box">
-      <h3>Excluir Funcionário</h3>
-      <p id="modalTexto"></p>
-      <div class="modal-actions">
-          <button class="secondary" onclick="fecharModal()">Cancelar</button>
-          <button class="danger" onclick="confirmarExclusao()">Confirmar Exclusão</button>
-      </div>
-  </div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
