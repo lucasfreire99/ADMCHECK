@@ -3,12 +3,36 @@ let matriculaParaExcluir = null;
 
 /* Estrutura simplificada exemplo */
 const estrutura = {
-"DOCUMENTOS":[
-"RG",
-"CPF",
-"Carteira de Trabalho",
-"Comprovante de Residência"
+"🔹 DOCUMENTOS OBRIGATÓRIOS":[
+"Currículo atualizado","01 Foto 3x4","CTPS Digital","RG – Frente e Verso","CPF",
+"Título de Eleitor","Comprovante de Residência Atual",
+"Certificado de Dispensa de Incorporação (Reservista)",
+"Cartão PIS + Consulta de Qualificação Cadastral",
+"Comprovante de Situação Cadastral do CPF",
+"Atestado de Antecedentes Criminais (Original)",
+"Conta Bancária – Bradesco ou Next",
+"Certificados de Cursos Profissionalizantes",
+"CNH (quando aplicável à função)",
+"Exame Toxicológico (para função motorista)",
+"Curso de Direção Defensiva (para função motorista)",
+"Curso de Primeiros Socorros (para função motorista)",
+"Cartão de Vacina","Atestado Médico Admissional"
+],
+"🔹 DOCUMENTOS OPCIONAIS / CONDICIONAIS":{
+"📚 Escolaridade":[
+"Ensino Fundamental","Ensino Médio","Ensino Superior",
+"Pós-Graduação","Mestrado","Doutorado"
+],
+"🏛 Registro Profissional":[
+"Registro Profissional (quando profissão regulamentada)",
+"Registro Profissional Pendente"
+],
+"👨‍👩‍👧‍👦 Dependentes":[
+"RG e CPF do Cônjuge","Certidão de Casamento / União Estável",
+"RG e CPF dos Filhos","Cartão de Vacina dos Filhos",
+"Declaração Escolar dos Filhos"
 ]
+}
 };
 
 function criarChecklist(){
