@@ -129,8 +129,8 @@ https://lucasfreire99.github.io/ADMCHECK/
 ## 👨‍💻 Autor
 
 **Lucas Freire**  
-Auxiliar de Departamento Pessoal / RH  
-Barra do Corda - MA
+Assistente de Departamento Pessoal / RH  
+Lima Campos - MA
 
 ---
 
