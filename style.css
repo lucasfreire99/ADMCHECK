@@ -8,7 +8,12 @@
 --success:#27c47d;
 }
 
-*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI;}
+*{
+box-sizing:border-box;
+margin:0;
+padding:0;
+font-family:Segoe UI;
+}
 
 body{
 background:var(--bg);
@@ -42,6 +47,11 @@ display:flex;
 flex-direction:column;
 gap:6px;
 cursor:pointer;
+transition:0.2s;
+}
+
+.funcionario-item:hover{
+background:#2a2f3b;
 }
 
 .func-top{
@@ -56,27 +66,27 @@ justify-content:space-between;
 align-items:center;
 }
 
-.func-nome{font-weight:500;}
-.func-matricula{font-size:11px;color:var(--muted);}
+.func-nome{
+font-weight:500;
+font-size:13px;
+}
 
+.func-matricula{
+font-size:11px;
+color:var(--muted);
+}
+
+/* STATUS VISUAL (DOT) */
 .badge{
-width:12px;
-height:12px;
+width:10px;
+height:10px;
 border-radius:50%;
 display:inline-block;
 }
 
-.badge.success{
-background:var(--success);
-}
-
-.badge.progress{
-background:var(--accent);
-}
-
-.badge.empty{
-background:var(--danger);
-}
+.badge.success{background:var(--success);}
+.badge.progress{background:var(--accent);}
+.badge.empty{background:#555c6d;}
 
 .btn-excluir{
 background:var(--danger);
@@ -89,8 +99,16 @@ color:white;
 }
 
 /* MAIN */
-.main{flex:1;overflow-y:auto;padding:40px;}
-.main-content{max-width:1000px;margin:auto;}
+.main{
+flex:1;
+overflow-y:auto;
+padding:40px;
+}
+
+.main-content{
+max-width:1000px;
+margin:auto;
+}
 
 .input-group{
 display:grid;
@@ -136,7 +154,11 @@ background:var(--accent);
 transition:0.3s;
 }
 
-.stats{font-size:12px;margin-bottom:20px;color:var(--muted);}
+.stats{
+font-size:12px;
+margin-bottom:20px;
+color:var(--muted);
+}
 
 /* MODAL */
 .modal-overlay{
