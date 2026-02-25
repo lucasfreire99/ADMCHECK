@@ -11,6 +11,13 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <h2 class="sidebar-title">Funcionários</h2>
+            
+            <!-- Campo de pesquisa -->
+            <div class="search-container">
+                <input type="text" id="pesquisaFuncionario" placeholder="Buscar por matrícula ou nome..." class="search-input" onkeyup="filtrarFuncionarios()">
+                <span class="search-icon">🔍</span>
+            </div>
+            
             <div id="funcionariosLista" class="funcionarios-lista">
                 <!-- Lista dinâmica será renderizada aqui -->
             </div>
@@ -24,6 +31,7 @@
                     <div class="input-row">
                         <input type="text" id="matricula" placeholder="Matrícula" class="input-field">
                         <input type="text" id="nome" placeholder="Nome completo" class="input-field">
+                        <input type="text" id="cargo" placeholder="Cargo" class="input-field">
                     </div>
                     <div class="button-row">
                         <button onclick="criarFuncionario()" class="btn btn-primary">Criar</button>
