@@ -3,159 +3,310 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Checklist Admissional</title>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>Checklist Admissional - DP/RH</title>
 
 <style>
-body{background:#0e1014;color:#fff;font-family:Segoe UI;padding:40px}
-.card{background:#161a22;padding:25px;border-radius:12px;max-width:900px;margin:auto}
-input{padding:8px;margin-right:10px;background:#222631;border:none;color:#fff;border-radius:6px}
-button{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;background:#5c8dff;color:#fff}
-ul{list-style:none;padding:0}
-li{padding:6px 0}
-.completed{text-decoration:line-through;color:#777}
-.progress-bar{height:6px;background:#222631;border-radius:10px;margin:15px 0}
-.progress{height:100%;width:0%;background:#5c8dff}
+:root {
+    --bg: #0e1014;
+    --card: #161a22;
+    --accent: #5c8dff;
+    --text: #e4e7ec;
+    --muted: #7b8496;
+    --danger: #ff5c7a;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    padding: 40px 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 900px;
+}
+
+h1 {
+    margin-bottom: 25px;
+    font-weight: 500;
+    font-size: 22px;
+}
+
+.card {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.input-group {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #222631;
+    color: var(--text);
+}
+
+button {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    margin-right: 6px;
+}
+
+.primary { background: var(--accent); color: white; }
+.secondary { background: #222631; color: var(--muted); }
+.danger { background: var(--danger); color: white; }
+
+.section-title {
+    margin-top: 25px;
+    margin-bottom: 10px;
+    font-size: 13px;
+    color: var(--accent);
+}
+
+.sub-title {
+    margin-top: 18px;
+    margin-bottom: 6px;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+ul { list-style: none; }
+
+li {
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+input[type="checkbox"] {
+    margin-right: 10px;
+    accent-color: var(--accent);
+}
+
+.completed label {
+    text-decoration: line-through;
+    color: var(--muted);
+}
+
+.progress-bar {
+    height: 6px;
+    background: #222631;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress {
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    transition: 0.3s;
+}
+
+.stats {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 15px;
+}
 </style>
 </head>
 
 <body>
+<div class="container">
+<h1>📋 Checklist de Documentação Admissional</h1>
 
 <div class="card">
-<h2>Checklist Admissional</h2>
 
-<input id="matricula" placeholder="Matrícula">
-<input id="nome" placeholder="Nome">
-<button id="btn">Carregar / Criar</button>
+<div class="input-group">
+    <input type="text" id="matricula" placeholder="Matrícula">
+    <input type="text" id="nome" placeholder="Nome do Colaborador">
+    <button class="primary" onclick="carregarFuncionario()">Carregar</button>
+</div>
 
 <div class="progress-bar">
-<div class="progress" id="progress"></div>
+    <div class="progress" id="progress"></div>
 </div>
-<div id="stats"></div>
+<div class="stats" id="stats"></div>
 
-<ul id="checklist"></ul>
+<div id="checklist"></div>
+
+<br>
+<button class="primary" onclick="copiarRelatorio()">Copiar Relatório</button>
+<button class="secondary" onclick="exportarTXT()">Exportar .TXT</button>
+<button class="danger" onclick="resetarChecklist()">Resetar</button>
+
+</div>
 </div>
 
 <script>
 
-const sbClient = window.supabase.createClient(
-"https://gqnazdvxvfvuakuaqwnz.supabase.co",
-"sb_publishable_Zs9RE_TW74gPk_mTwiWGMg_ICRRMek0"
-);
-
-let employeeId = null;
-let documentos = [];
-
-document.getElementById("btn").addEventListener("click", iniciar);
-
-async function iniciar(){
-
-const matricula = document.getElementById("matricula").value.trim();
-const nome = document.getElementById("nome").value.trim();
-
-if(!matricula || !nome){
-alert("Informe matrícula e nome");
-return;
+const estrutura = {
+"🔹 DOCUMENTOS OBRIGATÓRIOS":[
+"Currículo atualizado","01 Foto 3x4","CTPS Digital","RG – Frente e Verso","CPF",
+"Título de Eleitor","Comprovante de Residência Atual",
+"Certificado de Dispensa de Incorporação (Reservista)",
+"Cartão PIS + Consulta de Qualificação Cadastral",
+"Comprovante de Situação Cadastral do CPF",
+"Atestado de Antecedentes Criminais (Original)",
+"Conta Bancária – Bradesco ou Next",
+"Certificados de Cursos Profissionalizantes",
+"CNH (quando aplicável à função)",
+"Exame Toxicológico (para função motorista)",
+"Curso de Direção Defensiva (para função motorista)",
+"Curso de Primeiros Socorros (para função motorista)",
+"Cartão de Vacina","Atestado Médico Admissional"
+],
+"🔹 DOCUMENTOS OPCIONAIS / CONDICIONAIS":{
+"📚 Escolaridade":[
+"Ensino Fundamental","Ensino Médio","Ensino Superior",
+"Pós-Graduação","Mestrado","Doutorado"
+],
+"🏛 Registro Profissional":[
+"Registro Profissional (quando profissão regulamentada)",
+"Registro Profissional Pendente"
+],
+"👨‍👩‍👧‍👦 Dependentes":[
+"RG e CPF do Cônjuge","Certidão de Casamento / União Estável",
+"RG e CPF dos Filhos","Cartão de Vacina dos Filhos",
+"Declaração Escolar dos Filhos"
+]
 }
+};
 
-const { data: emp } = await sbClient
-.from("employees")
-.select("*")
-.eq("matricula", matricula);
+let checklist = {};
 
-if(emp.length === 0){
-
-const { data: novo } = await sbClient
-.from("employees")
-.insert([{ matricula, nome }])
-.select();
-
-employeeId = novo[0].id;
-
-await criarChecklist();
-
-}else{
-
-employeeId = emp[0].id;
-document.getElementById("nome").value = emp[0].nome;
-
-}
-
-await carregarChecklist();
-}
-
-async function criarChecklist(){
-
-const { data: docs } = await sbClient
-.from("documents")
-.select("id");
-
-const inserts = docs.map(d => ({
-employee_id: employeeId,
-document_id: d.id,
-entregue: false
-}));
-
-await sbClient.from("employee_documents").insert(inserts);
-}
-
-async function carregarChecklist(){
-
-const { data } = await sbClient
-.from("employee_documents")
-.select("id, entregue, documents(nome)")
-.eq("employee_id", employeeId);
-
-documentos = data;
-render();
+function gerarChecklistBase(){
+    let base = {};
+    Object.values(estrutura).forEach(sec=>{
+        if(Array.isArray(sec)){
+            sec.forEach(item=>base[item]=false);
+        } else {
+            Object.values(sec).forEach(sub=>{
+                sub.forEach(item=>base[item]=false);
+            });
+        }
+    });
+    return base;
 }
 
 function render(){
+    const container = document.getElementById("checklist");
+    container.innerHTML="";
 
-const ul = document.getElementById("checklist");
-ul.innerHTML = "";
-
-documentos.forEach(doc => {
-
-const li = document.createElement("li");
-
-if(doc.entregue) li.classList.add("completed");
-
-li.innerHTML = `
-<input type="checkbox" ${doc.entregue ? "checked" : ""}
-onchange="toggle('${doc.id}', ${doc.entregue})">
-${doc.documents.nome}
-`;
-
-ul.appendChild(li);
-});
-
-atualizarProgresso();
+    Object.entries(estrutura).forEach(([sec,conteudo])=>{
+        container.innerHTML+=`<div class="section-title">${sec}</div>`;
+        if(Array.isArray(conteudo)){
+            criarLista(conteudo,container);
+        } else {
+            Object.entries(conteudo).forEach(([sub,itens])=>{
+                container.innerHTML+=`<div class="sub-title">${sub}</div>`;
+                criarLista(itens,container);
+            });
+        }
+    });
+    atualizarProgresso();
 }
 
-async function toggle(id, status){
+function criarLista(itens,container){
+    const ul=document.createElement("ul");
+    itens.forEach(item=>{
+        const li=document.createElement("li");
+        if(checklist[item]) li.classList.add("completed");
+        li.innerHTML=`
+        <input type="checkbox" ${checklist[item]?"checked":""}
+        onchange="toggle('${item.replace(/'/g,"")}')">
+        <label>${item}</label>`;
+        ul.appendChild(li);
+    });
+    container.appendChild(ul);
+}
 
-await sbClient
-.from("employee_documents")
-.update({ entregue: !status })
-.eq("id", id);
-
-await carregarChecklist();
+function toggle(item){
+    checklist[item]=!checklist[item];
+    salvar();
 }
 
 function atualizarProgresso(){
+    const total=Object.keys(checklist).length;
+    const concluidos=Object.values(checklist).filter(v=>v).length;
+    const perc=(concluidos/total)*100;
+    document.getElementById("progress").style.width=perc+"%";
+    document.getElementById("stats").innerText=
+    `${concluidos} de ${total} documentos concluídos`;
+}
 
-const total = documentos.length;
-const concluidos = documentos.filter(d => d.entregue).length;
-const perc = total === 0 ? 0 : (concluidos/total)*100;
+function salvar(){
+    const matricula=document.getElementById("matricula").value;
+    const nome=document.getElementById("nome").value;
+    if(!matricula) return;
+    localStorage.setItem("func_"+matricula,
+    JSON.stringify({nome,checklist}));
+    render();
+}
 
-document.getElementById("progress").style.width = perc+"%";
-document.getElementById("stats").innerText =
-`${concluidos} de ${total} documentos concluídos`;
+function carregarFuncionario(){
+    const matricula=document.getElementById("matricula").value;
+    if(!matricula) return alert("Informe a matrícula.");
+    const dados=localStorage.getItem("func_"+matricula);
+    if(dados){
+        const obj=JSON.parse(dados);
+        document.getElementById("nome").value=obj.nome;
+        checklist=obj.checklist;
+    } else {
+        checklist=gerarChecklistBase();
+    }
+    render();
+}
+
+function gerarRelatorio(){
+    const matricula=document.getElementById("matricula").value;
+    const nome=document.getElementById("nome").value;
+    let texto=`CHECKLIST ADMISSIONAL\n\nMatrícula: ${matricula}\nNome: ${nome}\n\n`;
+    Object.entries(checklist).forEach(([doc,status])=>{
+        texto+=`[${status?"OK":"PENDENTE"}] ${doc}\n`;
+    });
+    return texto;
+}
+
+function copiarRelatorio(){
+    navigator.clipboard.writeText(gerarRelatorio());
+    alert("Relatório copiado!");
+}
+
+function exportarTXT(){
+    const blob=new Blob([gerarRelatorio()],{type:"text/plain"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download="checklist_admissional.txt";
+    link.click();
+}
+
+function resetarChecklist(){
+    checklist=gerarChecklistBase();
+    salvar();
 }
 
 </script>
-
 </body>
 </html>
