@@ -21,22 +21,17 @@
 body{
 background:var(--bg);
 color:var(--text);
-padding:30px;
+display:flex;
+height:100vh;
+overflow:hidden;
 }
 
-.layout{
-display:grid;
-grid-template-columns:280px 1fr;
-gap:20px;
-max-width:1300px;
-margin:auto;
-}
-
+/* SIDEBAR FIXA */
 .sidebar{
+width:300px;
 background:var(--card);
 padding:20px;
-border-radius:12px;
-height:85vh;
+border-right:1px solid rgba(255,255,255,0.05);
 overflow-y:auto;
 }
 
@@ -47,22 +42,31 @@ color:var(--accent);
 }
 
 .funcionario-item{
-padding:8px;
+padding:10px;
 border-radius:8px;
-margin-bottom:6px;
+margin-bottom:8px;
 cursor:pointer;
 background:#222631;
 font-size:12px;
-display:flex;
-justify-content:space-between;
-align-items:center;
 }
 
 .funcionario-item:hover{
 background:#2a2f3b;
 }
 
+.func-nome{
+font-weight:500;
+font-size:13px;
+}
+
+.func-matricula{
+font-size:11px;
+color:var(--muted);
+}
+
 .badge{
+margin-top:5px;
+display:inline-block;
 padding:3px 6px;
 border-radius:6px;
 font-size:10px;
@@ -71,14 +75,20 @@ font-size:10px;
 .badge.success{background:var(--success);}
 .badge.progress{background:var(--accent);}
 
+/* ÁREA PRINCIPAL */
 .main{
-background:var(--card);
-padding:30px;
-border-radius:12px;
+flex:1;
+overflow-y:auto;
+padding:40px;
+}
+
+.main-content{
+max-width:1000px;
+margin:auto;
 }
 
 h1{
-margin-bottom:20px;
+margin-bottom:25px;
 font-weight:500;
 }
 
@@ -169,14 +179,13 @@ color:var(--muted);
 
 <body>
 
-<div class="layout">
-
 <div class="sidebar">
-<h2>📋 Funcionários</h2>
+<h2>📋 Funcionários Cadastrados</h2>
 <div id="listaFuncionarios"></div>
 </div>
 
 <div class="main">
+<div class="main-content">
 
 <h1>Checklist Admissional</h1>
 
