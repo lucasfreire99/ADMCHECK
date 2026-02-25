@@ -45,8 +45,10 @@ const CHECKLIST_ESTRUTURA = {
 
 // Estado global
 let funcionarios = {};
+let funcionariosFiltrados = [];
 let funcionarioSelecionado = null;
 let excluirId = null;
+let termoPesquisa = '';
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
@@ -83,12 +85,45 @@ function criarChecklistVazio() {
     return checklist;
 }
 
+// Função para ordenar funcionários por matrícula (crescente)
+function ordenarFuncionariosPorMatricula(funcsArray) {
+    return funcsArray.sort((a, b) => {
+        // Extrair números da matrícula para comparação numérica
+        const numA = parseInt(a[1].matricula.replace(/\D/g, '')) || 0;
+        const numB = parseInt(b[1].matricula.replace(/\D/g, '')) || 0;
+        return numA - numB;
+    });
+}
+
+// Função para filtrar funcionários
+function filtrarFuncionarios() {
+    termoPesquisa = document.getElementById('pesquisaFuncionario').value.toLowerCase().trim();
+    renderizarSidebar();
+}
+
 // Funções de renderização
 function renderizarSidebar() {
     const lista = document.getElementById('funcionariosLista');
     lista.innerHTML = '';
 
-    Object.entries(funcionarios).forEach(([id, func]) => {
+    // Converter para array e ordenar
+    let funcionariosArray = Object.entries(funcionarios);
+    funcionariosArray = ordenarFuncionariosPorMatricula(funcionariosArray);
+
+    // Aplicar filtro de pesquisa
+    if (termoPesquisa) {
+        funcionariosArray = funcionariosArray.filter(([_, func]) => 
+            func.matricula.toLowerCase().includes(termoPesquisa) ||
+            func.nome.toLowerCase().includes(termoPesquisa)
+        );
+    }
+
+    if (funcionariosArray.length === 0) {
+        lista.innerHTML = '<p style="color: #6b7a8f; text-align: center; padding: 20px;">Nenhum funcionário encontrado</p>';
+        return;
+    }
+
+    funcionariosArray.forEach(([id, func]) => {
         const status = calcularStatus(func.checklist);
         const statusClass = status === 100 ? 'verde' : status > 0 ? 'amarelo' : 'cinza';
 
@@ -100,6 +135,7 @@ function renderizarSidebar() {
             <div class="funcionario-info">
                 <div class="funcionario-matricula">${func.matricula || 'Sem matrícula'}</div>
                 <div class="funcionario-nome">${func.nome || 'Sem nome'}</div>
+                ${func.cargo ? `<div class="funcionario-cargo">${func.cargo}</div>` : ''}
             </div>
             <div class="funcionario-right">
                 <span class="status-badge ${statusClass}"></span>
@@ -161,6 +197,7 @@ function renderizarChecklist() {
 function criarFuncionario() {
     const matricula = document.getElementById('matricula').value.trim();
     const nome = document.getElementById('nome').value.trim();
+    const cargo = document.getElementById('cargo').value.trim();
 
     if (!matricula || !nome) {
         alert('Preencha matrícula e nome!');
@@ -171,7 +208,8 @@ function criarFuncionario() {
     funcionarios[id] = {
         matricula,
         nome,
-        checklist: criarChecklistVazio() // Agora cria o checklist vazio
+        cargo: cargo || '',
+        checklist: criarChecklistVazio()
     };
 
     salvarFuncionarios();
@@ -188,6 +226,7 @@ function carregarFuncionario(id) {
     funcionarioSelecionado = id;
     document.getElementById('matricula').value = func.matricula;
     document.getElementById('nome').value = func.nome;
+    document.getElementById('cargo').value = func.cargo || '';
     renderizarChecklist();
 }
 
@@ -211,6 +250,11 @@ function salvarChecklist() {
     }
 
     funcionario.checklist = checklist;
+    
+    // Atualizar cargo também
+    const cargo = document.getElementById('cargo').value.trim();
+    funcionario.cargo = cargo;
+
     salvarFuncionarios();
     renderizarSidebar();
 }
@@ -244,7 +288,8 @@ function gerarRelatorio() {
 
     let relatorio = `CHECKLIST ADMISSIONAL\n`;
     relatorio += `Matrícula: ${func.matricula}\n`;
-    relatorio += `Nome: ${func.nome}\n\n`;
+    relatorio += `Nome: ${func.nome}\n`;
+    relatorio += `Cargo: ${func.cargo || 'Não informado'}\n\n`;
 
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
         if (itens.length === 0) continue;
@@ -305,6 +350,7 @@ function confirmarExclusao() {
             funcionarioSelecionado = null;
             document.getElementById('matricula').value = '';
             document.getElementById('nome').value = '';
+            document.getElementById('cargo').value = '';
             renderizarChecklist();
         }
 
@@ -317,4 +363,5 @@ function confirmarExclusao() {
 function limparCampos() {
     document.getElementById('matricula').value = '';
     document.getElementById('nome').value = '';
+    document.getElementById('cargo').value = '';
 }
