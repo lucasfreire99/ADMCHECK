@@ -114,7 +114,7 @@ O sistema está disponível em: [https://lucasfreire99.github.io/ADMCHECK/](http
 ### 📥 **Instalação local**
 
 # Clone o repositório
-git clone https://github.com/lucasfreire99.github.io/ADMCHECK.git
+`git clone https://github.com/lucasfreire99/ADMCHECK.git`
 
 # Entre no diretório
 cd admcheck
@@ -199,14 +199,7 @@ Push para a branch (git push origin feature/AmazingFeature)
 Abra um Pull Request
 
 📄 Licença
-Distribuído sob licença MIT. Veja LICENSE para mais informações.
-
-📞 Contato
-LinkedIn: Seu Nome
-
-Email: seu.email@example.com
-
-Projeto: https://github.com/seu-usuario/admcheck
+Distribuído sob licença MIT. Veja `LICENSE` para mais informações.
 
 ⭐ Funcionalidades Futuras
 Modo claro/clássico
