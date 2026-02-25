@@ -9,25 +9,6 @@
 > Sistema profissional para gestão de checklists admissionais desenvolvido para o setor de DP/RH.  
 > Organize, acompanhe e armazene a documentação dos funcionários com uma interface dark slim moderna e intuitiva.
 
-<p align="center">
-  <img src="https://via.placeholder.com/800x400/1a1e24/4f9eff?text=ADMCHECK+-+Dark+Slim+Interface" alt="ADMCHECK Preview" width="800">
-</p>
-
-## 📑 Índice
-
-- [Tecnologias](#-tecnologias)
-- [Funcionalidades](#-funcionalidades)
-- [Estrutura do Checklist](#-estrutura-do-checklist)
-- [Como usar](#-como-usar)
-- [Guia rápido](#-guia-rápido)
-- [Regras de Negócio](#-regras-de-negócio)
-- [Estrutura de Dados](#-estrutura-de-dados)
-- [Melhorias da Versão 2.0](#-melhorias-da-versão-20)
-- [Contribuições](#-contribuições)
-- [Licença](#-licença)
-- [Contato](#-contato)
-- [Funcionalidades Futuras](#-funcionalidades-futuras)
-
 ## 🚀 Tecnologias
 
 | Tecnologia | Descrição |
