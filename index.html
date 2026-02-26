@@ -10,7 +10,10 @@
     <div class="container">
         <!-- Sidebar -->
         <aside class="sidebar">
-            <h2 class="sidebar-title">Funcionários</h2>
+            <div class="sidebar-header">
+                <h2 class="sidebar-title">Funcionários</h2>
+                <div class="total-funcionarios" id="totalFuncionarios">0</div>
+            </div>
             
             <!-- Campo de pesquisa -->
             <div class="search-container">
@@ -37,6 +40,7 @@
                         <button onclick="criarFuncionario()" class="btn btn-primary">Criar</button>
                         <button onclick="salvarChecklist()" class="btn btn-success">Salvar</button>
                         <button onclick="exportarTxt()" class="btn btn-secondary">Exportar .txt</button>
+                        <button onclick="exportarPDF()" class="btn btn-secondary">Exportar PDF</button>
                         <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar Relatório</button>
                     </div>
                 </div>
@@ -61,6 +65,8 @@
         </div>
     </div>
 
+    <!-- Script para gerar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
