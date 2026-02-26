@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     carregarFuncionarios();
     renderizarSidebar();
     renderizarChecklist();
+    atualizarTotalFuncionarios();
 
     // Fechar modal com ESC
     document.addEventListener('keydown', (e) => {
@@ -101,6 +102,12 @@ function filtrarFuncionarios() {
     renderizarSidebar();
 }
 
+// Função para atualizar contador total de funcionários
+function atualizarTotalFuncionarios() {
+    const total = Object.keys(funcionarios).length;
+    document.getElementById('totalFuncionarios').textContent = total;
+}
+
 // Funções de renderização
 function renderizarSidebar() {
     const lista = document.getElementById('funcionariosLista');
@@ -126,6 +133,8 @@ function renderizarSidebar() {
     funcionariosArray.forEach(([id, func]) => {
         const status = calcularStatus(func.checklist);
         const statusClass = status === 100 ? 'verde' : status > 0 ? 'amarelo' : 'cinza';
+        const totalItens = Object.keys(func.checklist || {}).length;
+        const itensMarcados = Object.values(func.checklist || {}).filter(v => v).length;
 
         const item = document.createElement('div');
         item.className = 'funcionario-item';
@@ -139,12 +148,15 @@ function renderizarSidebar() {
             </div>
             <div class="funcionario-right">
                 <span class="status-badge ${statusClass}"></span>
+                <span class="status-tooltip ${statusClass}">${status}% (${itensMarcados}/${totalItens})</span>
                 <button class="btn-excluir" onclick="event.stopPropagation(); abrirModalExclusao('${id}')">✕</button>
             </div>
         `;
 
         lista.appendChild(item);
     });
+
+    atualizarTotalFuncionarios();
 }
 
 function renderizarChecklist() {
@@ -285,16 +297,23 @@ function gerarRelatorio() {
 
     const func = funcionarios[funcionarioSelecionado];
     const checklist = func.checklist || {};
+    const totalItens = Object.keys(checklist).length;
+    const itensMarcados = Object.values(checklist).filter(v => v).length;
+    const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
 
     let relatorio = `CHECKLIST ADMISSIONAL\n`;
+    relatorio += `================================\n\n`;
     relatorio += `Matrícula: ${func.matricula}\n`;
     relatorio += `Nome: ${func.nome}\n`;
-    relatorio += `Cargo: ${func.cargo || 'Não informado'}\n\n`;
+    relatorio += `Cargo: ${func.cargo || 'Não informado'}\n`;
+    relatorio += `Progresso: ${percentual}% (${itensMarcados}/${totalItens})\n\n`;
+    relatorio += `================================\n\n`;
 
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
         if (itens.length === 0) continue;
 
         relatorio += `${categoria}:\n`;
+        relatorio += `--------------------------------\n`;
         itens.forEach(item => {
             const marcado = checklist[item] ? '[X]' : '[ ]';
             relatorio += `${marcado} ${item}\n`;
@@ -317,6 +336,104 @@ function exportarTxt() {
     a.download = `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.txt`;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+function exportarPDF() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário!');
+        return;
+    }
+
+    const func = funcionarios[funcionarioSelecionado];
+    const checklist = func.checklist || {};
+    const totalItens = Object.keys(checklist).length;
+    const itensMarcados = Object.values(checklist).filter(v => v).length;
+    const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
+
+    // Criar documento PDF
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    
+    let y = 20;
+    const lineHeight = 7;
+    const marginLeft = 15;
+    
+    // Título
+    doc.setFontSize(18);
+    doc.setTextColor(0, 200, 83);
+    doc.text('ADMCHECK - Checklist Admissional', marginLeft, y);
+    y += lineHeight * 2;
+    
+    // Linha separadora
+    doc.setDrawColor(63, 72, 84);
+    doc.line(marginLeft, y - 3, 195, y - 3);
+    
+    // Informações do funcionário
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`Matrícula: ${func.matricula}`, marginLeft, y);
+    y += lineHeight;
+    doc.text(`Nome: ${func.nome}`, marginLeft, y);
+    y += lineHeight;
+    doc.text(`Cargo: ${func.cargo || 'Não informado'}`, marginLeft, y);
+    y += lineHeight;
+    
+    // Progresso
+    const statusColor = percentual === 100 ? [0, 200, 83] : percentual > 0 ? [255, 214, 0] : [107, 114, 128];
+    doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
+    doc.text(`Progresso: ${percentual}% (${itensMarcados}/${totalItens})`, marginLeft, y);
+    y += lineHeight * 1.5;
+    
+    // Linha separadora
+    doc.setDrawColor(63, 72, 84);
+    doc.line(marginLeft, y - 3, 195, y - 3);
+    
+    // Checklist
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(10);
+    
+    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+        
+        // Verificar se precisa de nova página
+        if (y > 270) {
+            doc.addPage();
+            y = 20;
+        }
+        
+        // Categoria
+        doc.setFontSize(11);
+        doc.setTextColor(183, 196, 217);
+        doc.text(`🔹 ${categoria}`, marginLeft, y);
+        y += lineHeight;
+        
+        // Itens
+        doc.setFontSize(9);
+        doc.setTextColor(204, 215, 233);
+        
+        itens.forEach(item => {
+            // Verificar se precisa de nova página
+            if (y > 270) {
+                doc.addPage();
+                y = 20;
+            }
+            
+            const marcado = checklist[item] ? '[X]' : '[ ]';
+            doc.text(`${marcado} ${item}`, marginLeft + 5, y);
+            y += lineHeight;
+        });
+        
+        y += lineHeight / 2;
+    }
+    
+    // Rodapé
+    doc.setFontSize(8);
+    doc.setTextColor(107, 122, 143);
+    doc.text('ADMCHECK - Sistema de Checklist Admissional', marginLeft, 285);
+    doc.text(new Date().toLocaleDateString('pt-BR'), 170, 285);
+    
+    // Salvar PDF
+    doc.save(`${func.matricula}_${func.nome.replace(/\s+/g, '_')}.pdf`);
 }
 
 function copiarRelatorio() {
