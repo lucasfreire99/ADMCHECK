@@ -40,12 +40,38 @@
                     <div class="button-row">
                         <button onclick="criarFuncionario()" class="btn btn-primary">Criar</button>
                         <button onclick="salvarChecklist()" class="btn btn-success">Salvar</button>
-                        <button onclick="exportarTxt()" class="btn btn-secondary">Exportar .txt</button>
-                        <button onclick="exportarPDF()" class="btn btn-secondary">Exportar PDF</button>
+                        
+                        <!-- Menu de Exportação -->
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('exportDropdown')">
+                                Exportar ▼
+                            </button>
+                            <div id="exportDropdown" class="dropdown-content">
+                                <a href="#" onclick="exportarTxt()">📄 TXT</a>
+                                <a href="#" onclick="exportarPDF()">📑 PDF</a>
+                                <a href="#" onclick="exportarExcel()">📊 Excel/CSV</a>
+                                <a href="#" onclick="exportarJSON()">📦 JSON</a>
+                            </div>
+                        </div>
+                        
+                        <!-- Menu de Importação -->
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('importDropdown')">
+                                Importar ▼
+                            </button>
+                            <div id="importDropdown" class="dropdown-content">
+                                <a href="#" onclick="baixarTemplate()">📋 Template</a>
+                                <a href="#" onclick="document.getElementById('fileImport').click()">📤 Importar CSV</a>
+                            </div>
+                        </div>
+                        
                         <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar Relatório</button>
                     </div>
                 </div>
             </div>
+
+            <!-- Input file oculto para importação -->
+            <input type="file" id="fileImport" accept=".csv,.xlsx,.xls" style="display: none;" onchange="importarArquivo(event)">
 
             <!-- Checkbox global para Dependentes -->
             <div class="dependentes-global-container" id="dependentesGlobalContainer" style="display: none;">
@@ -74,8 +100,23 @@
         </div>
     </div>
 
-    <!-- Script para gerar PDF -->
+    <!-- Modal de Importação -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Importação em Lote</h3>
+            <p class="modal-message" id="importMessage">Processando...</p>
+            <div class="progress-bar" id="importProgress">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="fecharImportModal()" class="btn btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
