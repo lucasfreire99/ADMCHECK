@@ -9,10 +9,15 @@
 <body>
     <div class="container">
         <!-- Sidebar -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2 class="sidebar-title">Funcionários</h2>
-                <div class="total-funcionarios" id="totalFuncionarios">0</div>
+                <div class="sidebar-header-left">
+                    <h2 class="sidebar-title">Funcionários</h2>
+                    <div class="total-funcionarios" id="totalFuncionarios">0</div>
+                </div>
+                <button class="btn-icon" onclick="toggleSidebar()" title="Expandir/Recolher">
+                    <span class="sidebar-toggle-icon" id="sidebarToggleIcon">◀</span>
+                </button>
             </div>
             
             <!-- Campo de pesquisa -->
@@ -24,6 +29,17 @@
             <div id="funcionariosLista" class="funcionarios-lista">
                 <!-- Lista dinâmica será renderizada aqui -->
             </div>
+
+            <!-- Botões de Backup -->
+            <div class="backup-buttons">
+                <button onclick="exportarBackup()" class="btn-backup" title="Exportar todos os dados">
+                    <span>💾</span> Backup
+                </button>
+                <button onclick="document.getElementById('restoreFile').click()" class="btn-restore" title="Restaurar de backup">
+                    <span>📂</span> Restaurar
+                </button>
+            </div>
+            <input type="file" id="restoreFile" accept=".json" style="display: none" onchange="restaurarBackup(event)">
         </aside>
 
         <!-- Área Principal -->
@@ -35,15 +51,34 @@
                         <input type="text" id="matricula" placeholder="Matrícula" class="input-field">
                         <input type="text" id="nome" placeholder="Nome completo" class="input-field">
                         <input type="text" id="cargo" placeholder="Cargo" class="input-field">
+                        <input type="text" id="setor" placeholder="Setor" class="input-field">
                     </div>
                     <div class="button-row">
                         <button onclick="criarFuncionario()" class="btn btn-primary">Criar</button>
                         <button onclick="salvarChecklist()" class="btn btn-success">Salvar</button>
                         <button onclick="exportarTxt()" class="btn btn-secondary">Exportar .txt</button>
                         <button onclick="exportarPDF()" class="btn btn-secondary">Exportar PDF</button>
-                        <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar Relatório</button>
+                        <button onclick="exportarExcel()" class="btn btn-secondary">Exportar Excel</button>
+                        <button onclick="exportarJSON()" class="btn btn-secondary">Exportar JSON</button>
+                        <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar</button>
                     </div>
                 </div>
+            </div>
+
+            <!-- Importação em Lote -->
+            <div class="import-section">
+                <div class="import-header">
+                    <h3>📦 Importação em Lote</h3>
+                    <div class="import-buttons">
+                        <button onclick="downloadTemplate()" class="btn-template">
+                            <span>📥</span> Download Template
+                        </button>
+                        <button onclick="document.getElementById('importFile').click()" class="btn-import">
+                            <span>📤</span> Importar CSV
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="importFile" accept=".csv" style="display: none" onchange="importarCSV(event)">
             </div>
 
             <!-- Checklist -->
@@ -56,17 +91,18 @@
     <!-- Modal de Confirmação -->
     <div id="modal" class="modal">
         <div class="modal-content">
-            <h3 class="modal-title">Confirmar exclusão</h3>
-            <p class="modal-message">Tem certeza que deseja excluir este funcionário?</p>
+            <h3 class="modal-title" id="modalTitle">Confirmar exclusão</h3>
+            <p class="modal-message" id="modalMessage">Tem certeza que deseja excluir este funcionário?</p>
             <div class="modal-actions">
-                <button onclick="confirmarExclusao()" class="btn btn-danger">Confirmar</button>
+                <button onclick="confirmarExclusao()" class="btn btn-danger" id="modalConfirmBtn">Confirmar</button>
                 <button onclick="fecharModal()" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
     </div>
 
-    <!-- Script para gerar PDF -->
+    <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
