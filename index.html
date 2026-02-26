@@ -71,9 +71,9 @@
                                 Backup ▼
                             </button>
                             <div id="backupDropdown" class="dropdown-content">
-                                <a href="#" onclick="backupSelecionado()">💾 Backup (Selecionado)</a>
-                                <a href="#" onclick="backupTodos()">📦 Exportar todos</a>
-                                <a href="#" onclick="document.getElementById('fileRestore').click()">🔄 Restaurar de Backup</a>
+                                <a href="#" onclick="backupFuncionarioAtual()">💾 Backup atual</a>
+                                <a href="#" onclick="backupTodosFuncionarios()">📦 Backup completo</a>
+                                <a href="#" onclick="document.getElementById('fileRestore').click()">🔄 Restaurar backup</a>
                             </div>
                         </div>
                         
@@ -146,18 +146,15 @@
     <!-- Modal de Restauração -->
     <div id="restoreModal" class="modal">
         <div class="modal-content">
-            <h3 class="modal-title">Restaurando Backup</h3>
+            <h3 class="modal-title">Restauração de Backup</h3>
             <p class="modal-message" id="restoreMessage">Processando restauração...</p>
             <div class="progress-bar" id="restoreProgress">
                 <div class="progress-fill" id="restoreProgressFill"></div>
             </div>
-            <div class="preview-container" id="previewContainer" style="display: none;">
-                <h4 class="preview-title">Prévia da Restauração</h4>
-                <div class="preview-content" id="previewContent"></div>
-            </div>
-            <div class="modal-actions" id="restoreActions">
-                <button onclick="confirmarRestauracao()" class="btn btn-success" id="confirmRestoreBtn" style="display: none;">Confirmar Restauração</button>
-                <button onclick="cancelarRestauracao()" class="btn btn-secondary">Cancelar</button>
+            <div class="backup-details" id="backupDetails"></div>
+            <div class="modal-actions">
+                <button onclick="confirmarRestauracao()" class="btn btn-success">Confirmar</button>
+                <button onclick="fecharRestoreModal()" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
     </div>
