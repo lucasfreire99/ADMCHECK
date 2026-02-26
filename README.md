@@ -1,188 +1,104 @@
-# 📋 ADMCHECK
+<div align="center">
+  
+# 📋 ADMCHECK - Sistema de Checklist Admissional
 
-![Version](https://img.shields.io/badge/version-2.0.0-blue)
+![Version](https://img.shields.io/badge/version-3.0.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Build](https://img.shields.io/badge/build-passing-brightgreen)
 ![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)
+![Maintenance](https://img.shields.io/badge/maintained-yes-blue)
+![JavaScript](https://img.shields.io/badge/JavaScript-Vanilla-F7DF1E)
+![CSS](https://img.shields.io/badge/CSS3-Dark%20Slim-1572B6)
 
-> Sistema profissional para gestão de checklists admissionais desenvolvido para o setor de DP/RH.
-> Organize, acompanhe e armazene a documentação dos funcionários com uma interface **dark slim moderna e intuitiva**.
 
----
+  ### 🎯 Gerencie checklists admissionais com eficiência e estilo
 
-## 📖 Introdução
-
-O **ADMCHECK** é uma aplicação web desenvolvida para otimizar o processo de conferência e organização da documentação admissional de funcionários.
-
-Voltado para o setor de **Departamento Pessoal (DP)** e **Recursos Humanos (RH)**, o sistema permite:
-
-* Controle estruturado de documentos obrigatórios e condicionais
-* Acompanhamento visual de status
-* Exportação de relatórios individuais
-* Persistência local dos dados
-
-A aplicação é leve, rápida e funciona 100% no navegador.
+</div>
 
 ---
 
-## 📑 Índice
 
-* [Tecnologias](#-tecnologias)
-* [Instalação](#-instalação)
-* [Como Usar](#-como-usar)
-* [Funcionalidades](#-funcionalidades)
-* [Estrutura do Checklist](#-estrutura-do-checklist)
-* [Regras de Negócio](#-regras-de-negócio)
-* [Estrutura de Dados](#-estrutura-de-dados)
-* [Melhorias da Versão 2.0](#-melhorias-da-versão-20)
-* [Funcionalidades Futuras](#-funcionalidades-futuras)
-* [Contribuições](#-contribuições)
-* [Licença](#-licença)
-* [Contato](#-contato)
+## 🎯 Sobre o Projeto
 
----
+**ADMCHECK** é um sistema web profissional desenvolvido para o setor de **DP/RH** gerenciar checklists admissionais de forma eficiente, intuitiva e elegante.
 
-## 🚀 Tecnologias
+Com uma interface **dark slim moderna**, o sistema permite:
 
-| Tecnologia               | Descrição                                    |
-| ------------------------ | -------------------------------------------- |
-| **HTML5**                | Estrutura semântica e acessível              |
-| **CSS3**                 | Design system dark slim com animações suaves |
-| **JavaScript (Vanilla)** | Lógica pura sem frameworks                   |
-| **LocalStorage**         | Persistência de dados no navegador           |
-| **GitHub Pages**         | Hospedagem gratuita e escalável              |
-
----
-
-## 📥 Instalação
-
-### 🔗 Acessar Online
-
-A aplicação está disponível em:
-
-👉 [https://lucasfreire99.github.io/ADMCHECK/](https://lucasfreire99.github.io/ADMCHECK/)
-
----
-
-### 💻 Instalação Local
-
-```bash
-# Clone o repositório
-git clone https://github.com/lucasfreire99/ADMCHECK.git
-
-# Entre no diretório
-cd ADMCHECK
-
-# Abra o index.html no navegador
-# ou utilize um servidor local (recomendado)
-npx live-server
-```
-
----
-
-## 🖥️ Como Usar
-
-### 1️⃣ Cadastrar Funcionário
-
-1. Preencha:
-
-   * Matrícula
-   * Nome
-   * Cargo
-2. Clique em **"Criar"**
-3. O funcionário aparecerá automaticamente na sidebar
-
----
-
-### 2️⃣ Preencher Checklist
-
-1. Clique no funcionário na sidebar
-2. Marque ou desmarque os documentos
-3. Clique em **Salvar** (ou aguarde o salvamento automático)
-4. O status será atualizado automaticamente
-
----
-
-### 3️⃣ Buscar Funcionários
-
-1. Utilize o campo de busca
-2. Digite parte da matrícula ou nome
-3. A lista será filtrada em tempo real
-
----
-
-### 4️⃣ Exportar Relatório
-
-1. Selecione o funcionário
-2. Clique em:
-
-   * **Exportar .txt** (download automático)
-   * **Copiar Relatório** (área de transferência)
-
-O relatório contém:
-
-* Matrícula
-* Nome
-* Cargo
-* Checklist completo
+- 📝 Cadastrar funcionários com matrícula, nome, cargo e setor  
+- ✅ Gerenciar checklist completo de documentos admissionais  
+- 📊 Acompanhar progresso com indicadores visuais  
+- 💾 Persistência local dos dados via `localStorage`  
+- 📤 Exportar relatórios em múltiplos formatos  
+- 📥 Importar funcionários em lote  
+- 🔄 Backup e restauração de dados  
 
 ---
 
 ## ✨ Funcionalidades
 
-### 📌 Gerenciamento de Funcionários
+### 📌 Gestão de Funcionários
 
-* Cadastro completo (matrícula, nome e cargo)
-* Listagem ordenada por matrícula (crescente)
-* Busca em tempo real
-* Exclusão com modal de confirmação
-
----
-
-### 📋 Checklist Estruturado
-
-* 5 categorias organizadas hierarquicamente
-* +30 itens documentais
-* Checkboxes interativos
-* Salvamento automático
-* Categorias expansivas
+- Cadastro completo (Matrícula, Nome, Cargo e Setor)
+- Ordenação automática por matrícula (crescente)
+- Busca em tempo real
+- Contador total com badge
+- Exclusão com modal de confirmação
 
 ---
 
-### 🎯 Indicadores Visuais
+### 📋 Checklist Inteligente
 
-| Cor        | Significado        | Percentual |
-| ---------- | ------------------ | ---------- |
-| 🟢 Verde   | Checklist completo | 100%       |
-| 🟡 Amarelo | Parcial            | 1% – 99%   |
-| ⚪ Cinza    | Não iniciado       | 0%         |
-
----
-
-### 💾 Persistência
-
-* Dados armazenados no `localStorage`
-* Estrutura otimizada por ID único (timestamp)
-* Checklist inicia sempre vazio
+- 5 categorias organizadas
+- Status "Não Aplicável" (➖) para itens condicionais
+- Escolaridade exclusiva (apenas 1 nível pode ser marcado)
+- Dependentes condicionais (categoria pode ser ocultada)
+- Cálculo inteligente de progresso
 
 ---
 
-### 📤 Exportação
+### 🎯 Sistema de Status
 
-* Exportação `.txt`
-* Cópia para clipboard
-* Nome do arquivo: `matricula_nome.txt`
+- 🟢 Verde → 100% (Checklist completo)
+- 🟡 Amarelo → 1% a 99% (Parcial)
+- ⚪ Cinza → 0% (Não iniciado)
 
 ---
 
-### 🎨 Design System
+### 📤 Exportação Multi-formato
 
-* Paleta dark slim (`#0f1115`, `#1a1e24`, `#252b33`)
-* Sidebar fixa
-* Scroll customizado
-* Border-radius 8–12px
-* Tipografia Segoe UI
-* Modal com overlay e suporte à tecla ESC
+- 📄 TXT
+- 📑 PDF
+- 📊 Excel (XLSX)
+- 📦 JSON
+
+---
+
+### 📥 Importação em Lote
+
+- Download de template CSV/Excel
+- Upload em massa
+- Barra de progresso
+- Resumo de importação
+
+---
+
+### 💾 Backup e Restauração
+
+- Backup do funcionário atual
+- Backup completo do sistema
+- Restauração via arquivo `.backup`
+- Modal com progresso visual
+
+---
+
+## 🚀 Tecnologias
+
+- **HTML5**
+- **CSS3**
+- **JavaScript (ES6+)**
+- **LocalStorage**
+- **jsPDF**
+- **SheetJS (XLSX)**
 
 ---
 
@@ -190,84 +106,106 @@ O relatório contém:
 
 ### 🔹 Documentos Obrigatórios
 
-* Currículo atualizado
-* 01 Foto 3x4
-* CTPS Digital
-* RG – Frente e Verso
-* CPF
-* Título de Eleitor
-* Comprovante de Residência
-* Reservista
-* Cartão PIS
-* Situação Cadastral CPF
-* Antecedentes Criminais
-* Conta Bancária
-* Certificados
-* CNH (quando aplicável)
-* Exame Toxicológico (motorista)
-* Direção Defensiva (motorista)
-* Primeiros Socorros (motorista)
-* Cartão de Vacina
-* Atestado Médico Admissional
-
----
+- Currículo atualizado
+- 01 Foto 3x4
+- CTPS Digital
+- RG – Frente e Verso
+- CPF
+- Título de Eleitor
+- Comprovante de Residência Atual
+- Certificado de Dispensa de Incorporação (Reservista) ➖
+- Cartão PIS + Consulta de Qualificação Cadastral
+- Comprovante de Situação Cadastral do CPF
+- Atestado de Antecedentes Criminais
+- Conta Bancária – Bradesco ou Next
+- Certificados de Cursos Profissionalizantes ➖
+- CNH (quando aplicável) ➖
+- Exame Toxicológico ➖
+- Curso de Direção Defensiva ➖
+- Curso de Primeiros Socorros ➖
+- Cartão de Vacina
+- Atestado Médico Admissional
 
 ### 🔹 Documentos Opcionais / Condicionais
 
-**Escolaridade**
+#### 📚 Escolaridade (Exclusivo)
 
-* Ensino Fundamental
-* Ensino Médio
-* Ensino Superior
-* Pós-Graduação
-* Mestrado
-* Doutorado
+- Ensino Fundamental
+- Ensino Médio
+- Ensino Superior
+- Pós-Graduação
+- Mestrado
+- Doutorado
 
-**Registro Profissional**
+#### 🏛 Registro Profissional
 
-* Registro Profissional
-* Registro Pendente
+- Registro Profissional ➖
+- Registro Profissional Pendente
 
-**Dependentes**
+#### 👨‍👩‍👧‍👦 Dependentes
 
-* RG/CPF do Cônjuge
-* Certidão de Casamento
-* RG/CPF dos Filhos
-* Cartão de Vacina dos Filhos
-* Declaração Escolar
+- RG e CPF do Cônjuge
+- Certidão de Casamento / União Estável
+- RG e CPF dos Filhos
+- Cartão de Vacina dos Filhos
+- Declaração Escolar dos Filhos
 
----
-
-## 🎯 Regras de Negócio
-
-### 📌 Ordenação
-
-* Sidebar ordenada por matrícula crescente
-* Ordenação numérica real (001, 002, 010...)
-
-### 📌 Persistência
-
-* Armazenamento via `localStorage`
-* ID único baseado em timestamp
-
-### 📌 Status
-
-* Cálculo automático por percentual de itens marcados
-* Atualização em tempo real
+➖ = Pode ser marcado como "Não Aplicável"
 
 ---
 
-## 📁 Estrutura de Dados
+## 🖥️ Instalação
 
-```javascript
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/admcheck.git
+
+# Entre no diretório
+cd admcheck
+
+# Execute com servidor local (recomendado)
+npx live-server
+```
+
+Ou simplesmente abra o `index.html` no navegador.
+
+---
+
+## 📖 Como Usar
+
+1. Cadastre um funcionário
+2. Selecione na sidebar
+3. Preencha o checklist
+4. Salve automaticamente
+5. Exporte, faça backup ou importe dados
+
+---
+
+## 📊 Regras de Negócio
+
+- Matrícula e nome são obrigatórios
+- Escolaridade permite apenas 1 seleção
+- Itens "Não Aplicável" não contam no progresso
+- Dependentes podem ser ocultados
+- Progresso = (Itens Marcados / Itens Válidos) × 100
+
+---
+
+## 💾 Estrutura de Dados
+
+```json
 {
-  "ID_UNICO": {
-    matricula: "123",
-    nome: "João Silva",
-    cargo: "Analista de RH",
-    checklist: {
-      "Currículo atualizado": false,
-      "01 Foto 3x4": true
+  "ID_TIMESTAMP": {
+    "matricula": "001",
+    "nome": "João Silva",
+    "cargo": "Analista",
+    "setor": "RH",
+    "naoPossuiDependentes": false,
+    "checklist": {
+      "Currículo atualizado": {
+        "marcado": true,
+        "naoAplicavel": false
+      }
     }
   }
 }
@@ -275,58 +213,69 @@ O relatório contém:
 
 ---
 
-## 🔧 Melhorias da Versão 2.0
+## 🎨 Design System
 
-| Funcionalidade          | Descrição                        |
-| ----------------------- | -------------------------------- |
-| 📊 Ordenação            | Ordenação numérica por matrícula |
-| 🔍 Busca                | Filtro em tempo real             |
-| 👔 Campo Cargo          | Novo campo no cadastro           |
-| 🎨 Cargo na Sidebar     | Exibido abaixo do nome           |
-| 📄 Relatório Atualizado | Inclui cargo                     |
-| ⚡ Performance           | Otimização na renderização       |
+**Cores Principais**
 
----
+- Fundo: `#0f1115`
+- Sidebar: `#1a1e24`
+- Cards: `#252b33`
+- Destaque: `#4f9eff`
 
-## ⭐ Funcionalidades Futuras
+**Status**
 
-* Modo claro
-* Gráficos de progresso
-* Múltiplos checklists por funcionário
-* Backup e restore
-* Impressão do relatório
-* Upload de documentos
+- Verde: `#00c853`
+- Amarelo: `#ffd600`
+- Cinza: `#6b7280`
 
 ---
 
-## 🤝 Contribuições
+## 🗺️ Roadmap
 
-Contribuições são bem-vindas!
+### ✅ Versão 1.0
+- Cadastro básico
+- Checklist estático
+- Exportação TXT
 
-1. Faça um fork
-2. Crie uma branch (`git checkout -b feature/NovaFeature`)
-3. Commit (`git commit -m 'Add NovaFeature'`)
-4. Push (`git push origin feature/NovaFeature`)
+### ✅ Versão 2.0
+- Busca em tempo real
+- Exportação PDF/Excel/JSON
+- Importação em lote
+
+### ✅ Versão 3.0
+- Status "Não Aplicável"
+- Backup completo
+- Restauração
+- Modais com progresso
+
+### 🔜 Próximas Versões
+- Modo claro
+- Dashboard com gráficos
+- Upload de documentos
+- Alertas de vencimento
+- Autenticação
+- Sincronização em nuvem
+- PWA Mobile
+
+---
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch
+3. Commit suas alterações
+4. Envie para o repositório
 5. Abra um Pull Request
 
 ---
 
 ## 📄 Licença
 
-Distribuído sob a licença **MIT**.
-Consulte o arquivo `LICENSE` para mais detalhes.
+Distribuído sob licença MIT.
 
 ---
 
-## 📞 Contato
-
-GitHub: [https://github.com/lucasfreire99](https://github.com/lucasfreire99)
-Projeto: [https://github.com/lucasfreire99/ADMCHECK](https://github.com/lucasfreire99/ADMCHECK)
-Live Demo: [https://lucasfreire99.github.io/ADMCHECK/](https://lucasfreire99.github.io/ADMCHECK/)
-
----
-
-<p align="center">
+<div align="center">
   <sub>Desenvolvido com ❤️ para o setor de DP/RH</sub><br>
-  <sub>© 2024 ADMCHECK - Todos os direitos reservados</sub>
-</p>
+  <sub>© 2026 ADMCHECK - Versão 3.0.0</sub>
+</div>
