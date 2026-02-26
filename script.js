@@ -1,57 +1,46 @@
-// Estrutura do checklist
+// Estrutura do checklist com marcação de itens que podem ser "Não Aplicável"
 const CHECKLIST_ESTRUTURA = {
     "DOCUMENTOS OBRIGATÓRIOS": [
-        "Currículo atualizado",
-        "01 Foto 3x4",
-        "CTPS Digital",
-        "RG – Frente e Verso",
-        "CPF",
-        "Título de Eleitor",
-        "Comprovante de Residência Atual",
-        "Certificado de Dispensa de Incorporação (Reservista)",
-        "Cartão PIS + Consulta de Qualificação Cadastral",
-        "Comprovante de Situação Cadastral do CPF",
-        "Atestado de Antecedentes Criminais (Original)",
-        "Conta Bancária – Bradesco ou Next",
-        "Certificados de Cursos Profissionalizantes",
-        "CNH (quando aplicável à função)",
-        "Exame Toxicológico (para função motorista)",
-        "Curso de Direção Defensiva (para função motorista)",
-        "Curso de Primeiros Socorros (para função motorista)",
-        "Cartão de Vacina",
-        "Atestado Médico Admissional"
+        { nome: "Currículo atualizado", podeNaoAplicavel: false },
+        { nome: "01 Foto 3x4", podeNaoAplicavel: false },
+        { nome: "CTPS Digital", podeNaoAplicavel: false },
+        { nome: "RG – Frente e Verso", podeNaoAplicavel: false },
+        { nome: "CPF", podeNaoAplicavel: false },
+        { nome: "Título de Eleitor", podeNaoAplicavel: false },
+        { nome: "Comprovante de Residência Atual", podeNaoAplicavel: false },
+        { nome: "Certificado de Dispensa de Incorporação (Reservista)", podeNaoAplicavel: true },
+        { nome: "Cartão PIS + Consulta de Qualificação Cadastral", podeNaoAplicavel: false },
+        { nome: "Comprovante de Situação Cadastral do CPF", podeNaoAplicavel: false },
+        { nome: "Atestado de Antecedentes Criminais (Original)", podeNaoAplicavel: false },
+        { nome: "Conta Bancária – Bradesco ou Next", podeNaoAplicavel: false },
+        { nome: "Certificados de Cursos Profissionalizantes", podeNaoAplicavel: true },
+        { nome: "CNH (quando aplicável à função)", podeNaoAplicavel: true },
+        { nome: "Exame Toxicológico (para função motorista)", podeNaoAplicavel: true },
+        { nome: "Curso de Direção Defensiva (para função motorista)", podeNaoAplicavel: true },
+        { nome: "Curso de Primeiros Socorros (para função motorista)", podeNaoAplicavel: true },
+        { nome: "Cartão de Vacina", podeNaoAplicavel: false },
+        { nome: "Atestado Médico Admissional", podeNaoAplicavel: false }
     ],
+    "DOCUMENTOS OPCIONAIS / CONDICIONAIS": [],
     "Escolaridade": [
-        "Ensino Fundamental",
-        "Ensino Médio",
-        "Ensino Superior",
-        "Pós-Graduação",
-        "Mestrado",
-        "Doutorado"
+        { nome: "Ensino Fundamental", podeNaoAplicavel: false, exclusivo: true },
+        { nome: "Ensino Médio", podeNaoAplicavel: false, exclusivo: true },
+        { nome: "Ensino Superior", podeNaoAplicavel: false, exclusivo: true },
+        { nome: "Pós-Graduação", podeNaoAplicavel: false, exclusivo: true },
+        { nome: "Mestrado", podeNaoAplicavel: false, exclusivo: true },
+        { nome: "Doutorado", podeNaoAplicavel: false, exclusivo: true }
     ],
     "Registro Profissional": [
-        "Registro Profissional (quando profissão regulamentada)",
-        "Registro Profissional Pendente"
+        { nome: "Registro Profissional (quando profissão regulamentada)", podeNaoAplicavel: true },
     ],
     "Dependentes": [
-        "RG e CPF do Cônjuge",
-        "Certidão de Casamento / União Estável",
-        "RG e CPF dos Filhos",
-        "Cartão de Vacina dos Filhos",
-        "Declaração Escolar dos Filhos"
+        { nome: "RG e CPF do Cônjuge", podeNaoAplicavel: false },
+        { nome: "Certidão de Casamento / União Estável", podeNaoAplicavel: false },
+        { nome: "RG e CPF dos Filhos", podeNaoAplicavel: false },
+        { nome: "Cartão de Vacina dos Filhos", podeNaoAplicavel: false },
+        { nome: "Declaração Escolar dos Filhos", podeNaoAplicavel: false }
     ]
 };
-
-// Itens que podem ser "Não Aplicável"
-const ITENS_NAO_APLICAVEIS = [
-    "Certificado de Dispensa de Incorporação (Reservista)",
-    "Certificados de Cursos Profissionalizantes",
-    "Registro Profissional (quando profissão regulamentada)",
-    "CNH (quando aplicável à função)",
-    "Exame Toxicológico (para função motorista)",
-    "Curso de Direção Defensiva (para função motorista)",
-    "Curso de Primeiros Socorros (para função motorista)"
-];
 
 // Estado global
 let funcionarios = {};
@@ -59,7 +48,6 @@ let funcionariosFiltrados = [];
 let funcionarioSelecionado = null;
 let excluirId = null;
 let termoPesquisa = '';
-let sidebarCollapsed = false;
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', () => {
@@ -74,12 +62,6 @@ document.addEventListener('DOMContentLoaded', () => {
             fecharModal();
         }
     });
-
-    // Carregar estado da sidebar
-    const savedState = localStorage.getItem('sidebar_collapsed');
-    if (savedState === 'true') {
-        toggleSidebar();
-    }
 });
 
 // Funções de persistência
@@ -97,11 +79,10 @@ function criarChecklistVazio() {
     const checklist = {};
     for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
         itens.forEach(item => {
-            if (ITENS_NAO_APLICAVEIS.includes(item)) {
-                checklist[item] = { status: false, naoAplicavel: false };
-            } else {
-                checklist[item] = false;
-            }
+            checklist[item.nome] = { 
+                marcado: false, 
+                naoAplicavel: false 
+            };
         });
     }
     return checklist;
@@ -110,6 +91,7 @@ function criarChecklistVazio() {
 // Função para ordenar funcionários por matrícula (crescente)
 function ordenarFuncionariosPorMatricula(funcsArray) {
     return funcsArray.sort((a, b) => {
+        // Extrair números da matrícula para comparação numérica
         const numA = parseInt(a[1].matricula.replace(/\D/g, '')) || 0;
         const numB = parseInt(b[1].matricula.replace(/\D/g, '')) || 0;
         return numA - numB;
@@ -126,18 +108,6 @@ function filtrarFuncionarios() {
 function atualizarTotalFuncionarios() {
     const total = Object.keys(funcionarios).length;
     document.getElementById('totalFuncionarios').textContent = total;
-}
-
-// Função para toggle da sidebar
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const toggleIcon = document.getElementById('sidebarToggleIcon');
-    
-    sidebarCollapsed = !sidebarCollapsed;
-    sidebar.classList.toggle('collapsed', sidebarCollapsed);
-    toggleIcon.textContent = sidebarCollapsed ? '▶' : '◀';
-    
-    localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
 }
 
 // Funções de renderização
@@ -166,8 +136,8 @@ function renderizarSidebar() {
     funcionariosArray.forEach(([id, func]) => {
         const status = calcularStatus(func.checklist);
         const statusClass = status === 100 ? 'verde' : status > 0 ? 'amarelo' : 'cinza';
-        const totalItens = calcularTotalItens(func.checklist);
-        const itensMarcados = calcularItensMarcados(func.checklist);
+        const totalItens = Object.keys(func.checklist || {}).length;
+        const itensMarcados = Object.values(func.checklist || {}).filter(v => v.marcado && !v.naoAplicavel).length;
 
         const item = document.createElement('div');
         item.className = 'funcionario-item';
@@ -193,227 +163,98 @@ function renderizarSidebar() {
     atualizarTotalFuncionarios();
 }
 
-function calcularTotalItens(checklist) {
-    if (!checklist) return 0;
-    return Object.keys(checklist).length;
-}
-
-function calcularItensMarcados(checklist) {
-    if (!checklist) return 0;
-    return Object.values(checklist).filter(v => {
-        if (typeof v === 'object') {
-            return v.status === true;
-        }
-        return v === true;
-    }).length;
-}
-
-function calcularStatus(checklist) {
-    if (!checklist) return 0;
-    
-    const total = Object.keys(checklist).length;
-    if (total === 0) return 0;
-
-    let marcados = 0;
-    Object.values(checklist).forEach(v => {
-        if (typeof v === 'object') {
-            if (v.status === true) marcados++;
-        } else if (v === true) {
-            marcados++;
-        }
-    });
-
-    return Math.round((marcados / total) * 100);
-}
-
 function renderizarChecklist() {
     const container = document.getElementById('checklistContainer');
     container.innerHTML = '';
 
     if (!funcionarioSelecionado || !funcionarios[funcionarioSelecionado]) {
         container.innerHTML = '<p style="color: #6b7a8f; text-align: center; padding: 40px;">Selecione um funcionário para visualizar o checklist</p>';
+        document.getElementById('dependentesGlobalContainer').style.display = 'none';
         return;
     }
 
     const funcionario = funcionarios[funcionarioSelecionado];
     const checklist = funcionario.checklist || {};
 
+    // Mostrar/ocultar checkbox global de dependentes
+    document.getElementById('dependentesGlobalContainer').style.display = 'block';
+    const naoPossuiDependentes = funcionario.naoPossuiDependentes || false;
+    document.getElementById('naoPossuiDependentes').checked = naoPossuiDependentes;
+
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+
+        // Se não possui dependentes, pular a categoria Dependentes
+        if (categoria === "Dependentes" && naoPossuiDependentes) {
+            continue;
+        }
+
         const categoriaDiv = document.createElement('div');
         categoriaDiv.className = 'checklist-categoria';
 
         const titulo = document.createElement('h3');
         titulo.className = 'categoria-titulo';
         titulo.textContent = `🔹 ${categoria}`;
-        
-        if (categoria === 'Escolaridade') {
-            const extra = document.createElement('span');
-            extra.className = 'categoria-extra';
-            extra.textContent = '(máx. 2 opções)';
-            titulo.appendChild(extra);
-        }
-        
         categoriaDiv.appendChild(titulo);
 
-        // Opção especial para Dependentes
-        if (categoria === 'Dependentes') {
-            const naoPossuiDiv = document.createElement('div');
-            naoPossuiDiv.className = 'nao-possui-dependentes';
-            
-            const naoPossuiCheck = document.createElement('input');
-            naoPossuiCheck.type = 'checkbox';
-            naoPossuiCheck.id = 'naoPossuiDependentes';
-            naoPossuiCheck.checked = funcionario.naoPossuiDependentes || false;
-            naoPossuiCheck.onchange = (e) => {
-                funcionario.naoPossuiDependentes = e.target.checked;
-                if (e.target.checked) {
-                    // Marcar todos os dependentes como não aplicável
-                    itens.forEach(item => {
-                        if (!checklist[item]) {
-                            checklist[item] = false;
-                        }
-                    });
-                }
-                salvarFuncionarios();
-                renderizarChecklist();
-            };
-            
-            const naoPossuiLabel = document.createElement('label');
-            naoPossuiLabel.htmlFor = 'naoPossuiDependentes';
-            naoPossuiLabel.textContent = 'Não possui dependentes';
-            
-            naoPossuiDiv.appendChild(naoPossuiCheck);
-            naoPossuiDiv.appendChild(naoPossuiLabel);
-            categoriaDiv.appendChild(naoPossuiDiv);
-        }
-
         itens.forEach(item => {
+            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
             const itemDiv = document.createElement('div');
-            itemDiv.className = 'checklist-item';
+            itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
 
-            const isNaoAplicavel = ITENS_NAO_APLICAVEIS.includes(item);
-            const itemValue = checklist[item];
+            // Checkbox
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
+            checkbox.checked = itemData.marcado || false;
+            checkbox.disabled = itemData.naoAplicavel;
+            checkbox.onchange = () => {
+                if (item.exclusivo && checkbox.checked) {
+                    // Se for item exclusivo, desmarcar outros da mesma categoria
+                    desmarcarOutrosExclusivos(categoria, item.nome);
+                }
+                atualizarStatusAposMudanca();
+            };
 
-            if (isNaoAplicavel) {
-                // Radio buttons para Sim/Não/Não Aplicável
-                const radioGroup = document.createElement('div');
-                radioGroup.style.display = 'flex';
-                radioGroup.style.alignItems = 'center';
-                radioGroup.style.gap = '15px';
+            // Label
+            const label = document.createElement('label');
+            label.htmlFor = checkbox.id;
+            label.textContent = item.nome;
 
-                const status = typeof itemValue === 'object' ? itemValue : { status: false, naoAplicavel: false };
+            itemDiv.appendChild(checkbox);
+            itemDiv.appendChild(label);
 
-                // Radio Sim
-                const simLabel = document.createElement('label');
-                simLabel.style.display = 'flex';
-                simLabel.style.alignItems = 'center';
-                simLabel.style.gap = '5px';
-                simLabel.style.color = '#ccd7e9';
-                
-                const simRadio = document.createElement('input');
-                simRadio.type = 'radio';
-                simRadio.name = `radio_${item}`;
-                simRadio.checked = status.status === true && !status.naoAplicavel;
-                simRadio.onchange = () => {
-                    checklist[item] = { status: true, naoAplicavel: false };
-                    salvarChecklist();
-                };
-                
-                simLabel.appendChild(simRadio);
-                simLabel.appendChild(document.createTextNode('Sim'));
-
-                // Radio Não
-                const naoLabel = document.createElement('label');
-                naoLabel.style.display = 'flex';
-                naoLabel.style.alignItems = 'center';
-                naoLabel.style.gap = '5px';
-                naoLabel.style.color = '#ccd7e9';
-                
-                const naoRadio = document.createElement('input');
-                naoRadio.type = 'radio';
-                naoRadio.name = `radio_${item}`;
-                naoRadio.checked = status.status === false && !status.naoAplicavel;
-                naoRadio.onchange = () => {
-                    checklist[item] = { status: false, naoAplicavel: false };
-                    salvarChecklist();
-                };
-                
-                naoLabel.appendChild(naoRadio);
-                naoLabel.appendChild(document.createTextNode('Não'));
-
-                // Radio Não Aplicável
-                const naLabel = document.createElement('label');
-                naLabel.style.display = 'flex';
-                naLabel.style.alignItems = 'center';
-                naLabel.style.gap = '5px';
-                naLabel.style.color = '#8f9bae';
-                
-                const naRadio = document.createElement('input');
-                naRadio.type = 'radio';
-                naRadio.name = `radio_${item}`;
-                naRadio.checked = status.naoAplicavel === true;
-                naRadio.onchange = () => {
-                    checklist[item] = { status: false, naoAplicavel: true };
-                    salvarChecklist();
-                };
-                
-                naLabel.appendChild(naRadio);
-                naLabel.appendChild(document.createTextNode('Não Aplicável ➖'));
-
-                radioGroup.appendChild(simLabel);
-                radioGroup.appendChild(naoLabel);
-                radioGroup.appendChild(naLabel);
-
-                const label = document.createElement('span');
-                label.textContent = item;
-                label.style.color = '#ccd7e9';
-                label.style.minWidth = '300px';
-
-                itemDiv.appendChild(label);
-                itemDiv.appendChild(radioGroup);
-            } else if (categoria === 'Escolaridade') {
-                // Checkbox com limite de 2
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `check_${item.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
-                checkbox.checked = itemValue === true;
-                checkbox.onchange = (e) => {
-                    // Contar quantos já estão marcados
-                    const marcados = itens.filter(i => checklist[i] === true).length;
-                    
-                    if (e.target.checked && marcados >= 2) {
-                        alert('Máximo de 2 opções permitidas para Escolaridade');
-                        e.target.checked = false;
-                        return;
+            // Select para "Não Aplicável" (se aplicável)
+            if (item.podeNaoAplicavel) {
+                const select = document.createElement('select');
+                select.className = 'status-select';
+                select.onchange = (e) => {
+                    const valor = e.target.value;
+                    if (valor === 'naoAplicavel') {
+                        itemData.naoAplicavel = true;
+                        checkbox.checked = false;
+                        checkbox.disabled = true;
+                    } else {
+                        itemData.naoAplicavel = false;
+                        checkbox.disabled = false;
                     }
-                    
-                    checklist[item] = e.target.checked;
-                    salvarChecklist();
+                    itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
+                    atualizarStatusAposMudanca();
                 };
 
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.textContent = item;
+                const option1 = document.createElement('option');
+                option1.value = 'normal';
+                option1.textContent = '✔️ Normal';
+                option1.selected = !itemData.naoAplicavel;
 
-                itemDiv.appendChild(checkbox);
-                itemDiv.appendChild(label);
-            } else {
-                // Checkbox normal
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `check_${item.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
-                checkbox.checked = itemValue === true;
-                checkbox.onchange = () => {
-                    checklist[item] = checkbox.checked;
-                    salvarChecklist();
-                };
+                const option2 = document.createElement('option');
+                option2.value = 'naoAplicavel';
+                option2.textContent = '➖ Não Aplicável';
+                option2.selected = itemData.naoAplicavel;
 
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.textContent = item;
-
-                itemDiv.appendChild(checkbox);
-                itemDiv.appendChild(label);
+                select.appendChild(option1);
+                select.appendChild(option2);
+                itemDiv.appendChild(select);
             }
 
             categoriaDiv.appendChild(itemDiv);
@@ -421,6 +262,31 @@ function renderizarChecklist() {
 
         container.appendChild(categoriaDiv);
     }
+}
+
+// Função para desmarcar outros itens exclusivos na mesma categoria
+function desmarcarOutrosExclusivos(categoria, itemSelecionado) {
+    const itens = CHECKLIST_ESTRUTURA[categoria];
+    itens.forEach(item => {
+        if (item.exclusivo && item.nome !== itemSelecionado) {
+            const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
+            if (checkbox) {
+                checkbox.checked = false;
+            }
+        }
+    });
+}
+
+// Função para toggle do checklist de dependentes
+function toggleDependentesChecklist() {
+    if (!funcionarioSelecionado) return;
+
+    const naoPossuiDependentes = document.getElementById('naoPossuiDependentes').checked;
+    funcionarios[funcionarioSelecionado].naoPossuiDependentes = naoPossuiDependentes;
+    
+    // Salvar e recarregar checklist
+    salvarFuncionarios();
+    renderizarChecklist();
 }
 
 // Funções de funcionários
@@ -476,30 +342,24 @@ function salvarChecklist() {
     // Pega todos os itens do checklist atual
     for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
         itens.forEach(item => {
-            const checkbox = document.getElementById(`check_${item.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
+            const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
             if (checkbox) {
-                checklist[item] = checkbox.checked;
-            }
-        });
-    }
-
-    // Para itens com radio, precisamos pegar do objeto atual
-    const funcionarioAtual = funcionarios[funcionarioSelecionado];
-    if (funcionarioAtual && funcionarioAtual.checklist) {
-        Object.keys(funcionarioAtual.checklist).forEach(key => {
-            if (ITENS_NAO_APLICAVEIS.includes(key)) {
-                checklist[key] = funcionarioAtual.checklist[key];
+                const select = checkbox.parentElement.querySelector('.status-select');
+                const naoAplicavel = select ? select.value === 'naoAplicavel' : false;
+                
+                checklist[item.nome] = {
+                    marcado: checkbox.checked,
+                    naoAplicavel: naoAplicavel
+                };
             }
         });
     }
 
     funcionario.checklist = checklist;
     
-    // Atualizar cargo e setor
-    const cargo = document.getElementById('cargo').value.trim();
-    const setor = document.getElementById('setor').value.trim();
-    funcionario.cargo = cargo;
-    funcionario.setor = setor;
+    // Atualizar campos
+    funcionario.cargo = document.getElementById('cargo').value.trim();
+    funcionario.setor = document.getElementById('setor').value.trim();
 
     salvarFuncionarios();
     renderizarSidebar();
@@ -511,6 +371,18 @@ function atualizarStatusAposMudanca() {
     }
 }
 
+// Funções de status
+function calcularStatus(checklist) {
+    if (!checklist) return 0;
+    
+    const itens = Object.values(checklist);
+    const itensValidos = itens.filter(item => !item.naoAplicavel);
+    if (itensValidos.length === 0) return 0;
+
+    const marcados = itensValidos.filter(item => item.marcado).length;
+    return Math.round((marcados / itensValidos.length) * 100);
+}
+
 // Funções de exportação
 function gerarRelatorio() {
     if (!funcionarioSelecionado) {
@@ -520,8 +392,9 @@ function gerarRelatorio() {
 
     const func = funcionarios[funcionarioSelecionado];
     const checklist = func.checklist || {};
-    const totalItens = calcularTotalItens(checklist);
-    const itensMarcados = calcularItensMarcados(checklist);
+    const itensValidos = Object.values(checklist).filter(item => !item.naoAplicavel);
+    const totalItens = itensValidos.length;
+    const itensMarcados = itensValidos.filter(item => item.marcado).length;
     const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
 
     let relatorio = `CHECKLIST ADMISSIONAL\n`;
@@ -534,23 +407,19 @@ function gerarRelatorio() {
     relatorio += `================================\n\n`;
 
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+
         relatorio += `${categoria}:\n`;
         relatorio += `--------------------------------\n`;
         itens.forEach(item => {
-            const valor = checklist[item];
+            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
             let marcado = '[ ]';
-            
-            if (ITENS_NAO_APLICAVEIS.includes(item) && typeof valor === 'object') {
-                if (valor.naoAplicavel) {
-                    marcado = '[➖]';
-                } else {
-                    marcado = valor.status ? '[X]' : '[ ]';
-                }
-            } else {
-                marcado = valor ? '[X]' : '[ ]';
+            if (itemData.naoAplicavel) {
+                marcado = '[➖]';
+            } else if (itemData.marcado) {
+                marcado = '[X]';
             }
-            
-            relatorio += `${marcado} ${item}\n`;
+            relatorio += `${marcado} ${item.nome}\n`;
         });
         relatorio += '\n';
     }
@@ -580,10 +449,12 @@ function exportarPDF() {
 
     const func = funcionarios[funcionarioSelecionado];
     const checklist = func.checklist || {};
-    const totalItens = calcularTotalItens(checklist);
-    const itensMarcados = calcularItensMarcados(checklist);
+    const itensValidos = Object.values(checklist).filter(item => !item.naoAplicavel);
+    const totalItens = itensValidos.length;
+    const itensMarcados = itensValidos.filter(item => item.marcado).length;
     const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
 
+    // Criar documento PDF
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
     
@@ -628,6 +499,9 @@ function exportarPDF() {
     doc.setFontSize(10);
     
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+        
+        // Verificar se precisa de nova página
         if (y > 270) {
             doc.addPage();
             y = 20;
@@ -644,25 +518,20 @@ function exportarPDF() {
         doc.setTextColor(204, 215, 233);
         
         itens.forEach(item => {
+            // Verificar se precisa de nova página
             if (y > 270) {
                 doc.addPage();
                 y = 20;
             }
             
-            const valor = checklist[item];
+            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
             let marcado = '[ ]';
-            
-            if (ITENS_NAO_APLICAVEIS.includes(item) && typeof valor === 'object') {
-                if (valor.naoAplicavel) {
-                    marcado = '[➖]';
-                } else {
-                    marcado = valor.status ? '[X]' : '[ ]';
-                }
-            } else {
-                marcado = valor ? '[X]' : '[ ]';
+            if (itemData.naoAplicavel) {
+                marcado = '[➖]';
+            } else if (itemData.marcado) {
+                marcado = '[X]';
             }
-            
-            doc.text(`${marcado} ${item}`, marginLeft + 5, y);
+            doc.text(`${marcado} ${item.nome}`, marginLeft + 5, y);
             y += lineHeight;
         });
         
@@ -675,183 +544,8 @@ function exportarPDF() {
     doc.text('ADMCHECK - Sistema de Checklist Admissional', marginLeft, 285);
     doc.text(new Date().toLocaleDateString('pt-BR'), 170, 285);
     
+    // Salvar PDF
     doc.save(`${func.matricula}_${func.nome.replace(/\s+/g, '_')}.pdf`);
-}
-
-function exportarExcel() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return;
-    }
-
-    const func = funcionarios[funcionarioSelecionado];
-    const checklist = func.checklist || {};
-
-    // Preparar dados para o Excel
-    const dados = [];
-    
-    // Cabeçalho
-    dados.push(['CHECKLIST ADMISSIONAL']);
-    dados.push(['Matrícula', func.matricula]);
-    dados.push(['Nome', func.nome]);
-    dados.push(['Cargo', func.cargo || 'Não informado']);
-    dados.push(['Setor', func.setor || 'Não informado']);
-    dados.push([]);
-    
-    // Checklist por categoria
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        dados.push([categoria]);
-        itens.forEach(item => {
-            const valor = checklist[item];
-            let status = '';
-            
-            if (ITENS_NAO_APLICAVEIS.includes(item) && typeof valor === 'object') {
-                if (valor.naoAplicavel) {
-                    status = 'Não Aplicável';
-                } else {
-                    status = valor.status ? 'Sim' : 'Não';
-                }
-            } else {
-                status = valor ? 'Sim' : 'Não';
-            }
-            
-            dados.push([`  ${item}`, status]);
-        });
-        dados.push([]);
-    }
-
-    // Criar worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(dados);
-    
-    // Ajustar largura das colunas
-    ws['!cols'] = [{ wch: 50 }, { wch: 15 }];
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Checklist');
-    XLSX.writeFile(wb, `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.xlsx`);
-}
-
-function exportarJSON() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return;
-    }
-
-    const func = funcionarios[funcionarioSelecionado];
-    const blob = new Blob([JSON.stringify(func, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function exportarBackup() {
-    const blob = new Blob([JSON.stringify(funcionarios, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `admcheck_backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function restaurarBackup(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const dados = JSON.parse(e.target.result);
-            
-            // Validar estrutura básica
-            if (typeof dados !== 'object') {
-                throw new Error('Arquivo inválido');
-            }
-
-            // Confirmar restauração
-            if (confirm(`Isso irá substituir todos os ${Object.keys(funcionarios).length} funcionários atuais. Deseja continuar?`)) {
-                funcionarios = dados;
-                salvarFuncionarios();
-                renderizarSidebar();
-                renderizarChecklist();
-                alert('Backup restaurado com sucesso!');
-            }
-        } catch (error) {
-            alert('Erro ao restaurar backup: arquivo inválido');
-        }
-    };
-    reader.readAsText(file);
-    
-    // Limpar input
-    event.target.value = '';
-}
-
-// Funções de importação CSV
-function downloadTemplate() {
-    const template = [
-        ['matricula', 'nome', 'cargo', 'setor'],
-        ['001', 'João Silva', 'Analista de RH', 'Recursos Humanos'],
-        ['002', 'Maria Santos', 'Motorista', 'Logística'],
-        ['003', 'Pedro Oliveira', 'Auxiliar Administrativo', 'Administrativo']
-    ];
-    
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.aoa_to_sheet(template);
-    XLSX.utils.book_append_sheet(wb, ws, 'Modelo');
-    XLSX.writeFile(wb, 'modelo_importacao_funcionarios.xlsx');
-}
-
-function importarCSV(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        try {
-            const data = e.target.result;
-            const workbook = XLSX.read(data, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const worksheet = workbook.Sheets[sheetName];
-            const json = XLSX.utils.sheet_to_json(worksheet);
-
-            let importados = 0;
-            let erros = 0;
-
-            json.forEach((row, index) => {
-                if (row.matricula && row.nome) {
-                    const id = Date.now().toString() + index;
-                    funcionarios[id] = {
-                        matricula: String(row.matricula),
-                        nome: String(row.nome),
-                        cargo: row.cargo || '',
-                        setor: row.setor || '',
-                        naoPossuiDependentes: false,
-                        checklist: criarChecklistVazio()
-                    };
-                    importados++;
-                } else {
-                    erros++;
-                }
-            });
-
-            if (importados > 0) {
-                salvarFuncionarios();
-                renderizarSidebar();
-                alert(`${importados} funcionários importados com sucesso! ${erros > 0 ? `${erros} linhas ignoradas.` : ''}`);
-            } else {
-                alert('Nenhum funcionário válido encontrado no arquivo.');
-            }
-        } catch (error) {
-            alert('Erro ao importar arquivo. Verifique o formato.');
-        }
-    };
-    reader.readAsBinaryString(file);
-    
-    // Limpar input
-    event.target.value = '';
 }
 
 function copiarRelatorio() {
@@ -868,9 +562,6 @@ function copiarRelatorio() {
 // Funções do modal
 function abrirModalExclusao(id) {
     excluirId = id;
-    document.getElementById('modalTitle').textContent = 'Confirmar exclusão';
-    document.getElementById('modalMessage').textContent = 'Tem certeza que deseja excluir este funcionário?';
-    document.getElementById('modalConfirmBtn').textContent = 'Confirmar';
     document.getElementById('modal').classList.add('show');
 }
 
