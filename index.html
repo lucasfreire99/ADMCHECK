@@ -64,6 +64,18 @@
                                 <a href="#" onclick="document.getElementById('fileImport').click()">📤 Importar CSV</a>
                             </div>
                         </div>
+
+                        <!-- Menu de Backup -->
+                        <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('backupDropdown')">
+                                Backup ▼
+                            </button>
+                            <div id="backupDropdown" class="dropdown-content">
+                                <a href="#" onclick="backupSelecionado()">💾 Backup (Selecionado)</a>
+                                <a href="#" onclick="backupTodos()">📦 Exportar todos</a>
+                                <a href="#" onclick="document.getElementById('fileRestore').click()">🔄 Restaurar de Backup</a>
+                            </div>
+                        </div>
                         
                         <button onclick="copiarRelatorio()" class="btn btn-secondary">Copiar Relatório</button>
                     </div>
@@ -72,6 +84,9 @@
 
             <!-- Input file oculto para importação -->
             <input type="file" id="fileImport" accept=".csv,.xlsx,.xls" style="display: none;" onchange="importarArquivo(event)">
+
+            <!-- Input file oculto para restauração -->
+            <input type="file" id="fileRestore" accept=".json,.backup" style="display: none;" onchange="restaurarBackup(event)">
 
             <!-- Checkbox global para Dependentes -->
             <div class="dependentes-global-container" id="dependentesGlobalContainer" style="display: none;">
@@ -110,6 +125,39 @@
             </div>
             <div class="modal-actions">
                 <button onclick="fecharImportModal()" class="btn btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Backup -->
+    <div id="backupModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title" id="backupModalTitle">Backup em Andamento</h3>
+            <p class="modal-message" id="backupMessage">Preparando backup...</p>
+            <div class="progress-bar" id="backupProgress">
+                <div class="progress-fill" id="backupProgressFill"></div>
+            </div>
+            <div class="modal-actions">
+                <button onclick="fecharBackupModal()" class="btn btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Restauração -->
+    <div id="restoreModal" class="modal">
+        <div class="modal-content">
+            <h3 class="modal-title">Restaurando Backup</h3>
+            <p class="modal-message" id="restoreMessage">Processando restauração...</p>
+            <div class="progress-bar" id="restoreProgress">
+                <div class="progress-fill" id="restoreProgressFill"></div>
+            </div>
+            <div class="preview-container" id="previewContainer" style="display: none;">
+                <h4 class="preview-title">Prévia da Restauração</h4>
+                <div class="preview-content" id="previewContent"></div>
+            </div>
+            <div class="modal-actions" id="restoreActions">
+                <button onclick="confirmarRestauracao()" class="btn btn-success" id="confirmRestoreBtn" style="display: none;">Confirmar Restauração</button>
+                <button onclick="cancelarRestauracao()" class="btn btn-secondary">Cancelar</button>
             </div>
         </div>
     </div>
