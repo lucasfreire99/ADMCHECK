@@ -1,97 +1,74 @@
-/* Adicionar ao final do arquivo */
+/* Adicione estas regras ao final do arquivo style.css existente */
 
-/* Preview Container */
-.preview-container {
-    margin: 20px 0;
-    padding: 15px;
+/* Backup Details */
+.backup-details {
     background-color: #252b33;
     border-radius: 8px;
-    border: 1px solid #363e48;
-    max-height: 300px;
+    padding: 15px;
+    margin: 15px 0;
+    max-height: 200px;
     overflow-y: auto;
-}
-
-.preview-title {
-    color: #4f9eff;
-    font-size: 1rem;
-    font-weight: 500;
-    margin-bottom: 10px;
-}
-
-.preview-content {
-    color: #ccd7e9;
     font-size: 0.9rem;
-    line-height: 1.5;
+    color: #ccd7e9;
+    border: 1px solid #363e48;
 }
 
-.preview-item {
-    padding: 8px;
-    border-bottom: 1px solid #363e48;
+.backup-details pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: 'Consolas', monospace;
+    font-size: 0.8rem;
+    color: #9aa5b5;
+}
+
+.backup-summary {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    margin-bottom: 10px;
+    padding: 8px;
+    background-color: #1a1e24;
+    border-radius: 6px;
 }
 
-.preview-item:last-child {
-    border-bottom: none;
+.backup-summary-item {
+    text-align: center;
 }
 
-.preview-item-info {
-    flex: 1;
+.backup-summary-label {
+    font-size: 0.75rem;
+    color: #6b7a8f;
+    display: block;
 }
 
-.preview-item-matricula {
+.backup-summary-value {
+    font-size: 1.1rem;
     font-weight: 600;
     color: #4f9eff;
 }
 
-.preview-item-nome {
-    color: #e0e0e0;
-    margin-left: 10px;
-}
-
-.preview-item-status {
-    font-size: 0.85rem;
-    padding: 3px 8px;
-    border-radius: 12px;
-    background-color: #2f3640;
-}
-
-.preview-item-status.novo {
-    color: #00c853;
-}
-
-.preview-item-status.atualizado {
+.backup-warning {
     color: #ffd600;
-}
-
-.preview-item-status.conflito {
-    color: #ff4d4d;
-}
-
-/* Backup Info */
-.backup-info {
-    background-color: #1a1e24;
-    border-radius: 8px;
-    padding: 15px;
-    margin: 15px 0;
-    border: 1px solid #363e48;
-}
-
-.backup-info-row {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    color: #9aa5b5;
-    font-size: 0.9rem;
-}
-
-.backup-info-row strong {
-    color: #e0e0e0;
-}
-
-.backup-info-divider {
-    height: 1px;
-    background-color: #363e48;
+    font-size: 0.85rem;
     margin: 10px 0;
+    padding: 8px;
+    background-color: rgba(255, 214, 0, 0.1);
+    border-radius: 6px;
+    border-left: 3px solid #ffd600;
+}
+
+/* Ajuste na largura do modal */
+.modal-content {
+    min-width: 500px;
+    max-width: 600px;
+}
+
+/* Animação de progresso */
+@keyframes progressPulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.progress-fill {
+    animation: progressPulse 2s infinite;
 }
