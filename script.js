@@ -60,9 +60,29 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
             fecharModal();
+            fecharDropdowns();
+        }
+    });
+
+    // Fechar dropdowns ao clicar fora
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+            fecharDropdowns();
         }
     });
 });
+
+// Funções de dropdown
+function toggleDropdown(id) {
+    const dropdown = document.getElementById(id);
+    dropdown.classList.toggle('show');
+}
+
+function fecharDropdowns() {
+    document.querySelectorAll('.dropdown-content').forEach(dropdown => {
+        dropdown.classList.remove('show');
+    });
+}
 
 // Funções de persistência
 function carregarFuncionarios() {
@@ -110,6 +130,49 @@ function atualizarTotalFuncionarios() {
     document.getElementById('totalFuncionarios').textContent = total;
 }
 
+// Função para calcular itens válidos (ignorando não aplicáveis e considerando escolaridade como 1 item)
+function calcularItensValidos(checklist, naoPossuiDependentes) {
+    if (!checklist) return { total: 0, marcados: 0 };
+    
+    let total = 0;
+    let marcados = 0;
+    
+    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+        
+        // Pular dependentes se não possui
+        if (categoria === "Dependentes" && naoPossuiDependentes) {
+            continue;
+        }
+        
+        if (categoria === "Escolaridade") {
+            // Escolaridade conta como 1 item no total
+            total++;
+            
+            // Verificar se algum item de escolaridade está marcado
+            const escolaridadeMarcada = itens.some(item => 
+                checklist[item.nome] && checklist[item.nome].marcado && !checklist[item.nome].naoAplicavel
+            );
+            if (escolaridadeMarcada) {
+                marcados++;
+            }
+        } else {
+            // Demais categorias: cada item conta individualmente
+            itens.forEach(item => {
+                const itemData = checklist[item.nome];
+                if (itemData && !itemData.naoAplicavel) {
+                    total++;
+                    if (itemData.marcado) {
+                        marcados++;
+                    }
+                }
+            });
+        }
+    }
+    
+    return { total, marcados };
+}
+
 // Funções de renderização
 function renderizarSidebar() {
     const lista = document.getElementById('funcionariosLista');
@@ -134,10 +197,9 @@ function renderizarSidebar() {
     }
 
     funcionariosArray.forEach(([id, func]) => {
-        const status = calcularStatus(func.checklist);
+        const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
+        const status = total > 0 ? Math.round((marcados / total) * 100) : 0;
         const statusClass = status === 100 ? 'verde' : status > 0 ? 'amarelo' : 'cinza';
-        const totalItens = Object.keys(func.checklist || {}).length;
-        const itensMarcados = Object.values(func.checklist || {}).filter(v => v.marcado && !v.naoAplicavel).length;
 
         const item = document.createElement('div');
         item.className = 'funcionario-item';
@@ -152,7 +214,7 @@ function renderizarSidebar() {
             </div>
             <div class="funcionario-right">
                 <span class="status-badge ${statusClass}"></span>
-                <span class="status-tooltip ${statusClass}">${status}% (${itensMarcados}/${totalItens})</span>
+                <span class="status-tooltip ${statusClass}">${status}% (${marcados}/${total})</span>
                 <button class="btn-excluir" onclick="event.stopPropagation(); abrirModalExclusao('${id}')">✕</button>
             </div>
         `;
@@ -287,6 +349,7 @@ function toggleDependentesChecklist() {
     // Salvar e recarregar checklist
     salvarFuncionarios();
     renderizarChecklist();
+    renderizarSidebar();
 }
 
 // Funções de funcionários
@@ -371,19 +434,115 @@ function atualizarStatusAposMudanca() {
     }
 }
 
-// Funções de status
-function calcularStatus(checklist) {
-    if (!checklist) return 0;
+// Funções de exportação
+function gerarDadosFuncionario(id) {
+    const func = funcionarios[id];
+    const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
+    const percentual = total > 0 ? Math.round((marcados / total) * 100) : 0;
     
-    const itens = Object.values(checklist);
-    const itensValidos = itens.filter(item => !item.naoAplicavel);
-    if (itensValidos.length === 0) return 0;
-
-    const marcados = itensValidos.filter(item => item.marcado).length;
-    return Math.round((marcados / itensValidos.length) * 100);
+    return {
+        id,
+        matricula: func.matricula,
+        nome: func.nome,
+        cargo: func.cargo || '',
+        setor: func.setor || '',
+        progresso: percentual,
+        itens_marcados: marcados,
+        itens_totais: total,
+        naoPossuiDependentes: func.naoPossuiDependentes,
+        checklist: func.checklist
+    };
 }
 
-// Funções de exportação
+function exportarExcel() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário!');
+        return;
+    }
+
+    const func = funcionarios[funcionarioSelecionado];
+    const dados = gerarDadosFuncionario(funcionarioSelecionado);
+    
+    // Preparar dados para planilha
+    const wb = XLSX.utils.book_new();
+    
+    // Aba de Resumo
+    const resumoData = [
+        ['ADMCHECK - Checklist Admissional'],
+        ['Gerado em:', new Date().toLocaleString('pt-BR')],
+        [],
+        ['INFORMAÇÕES DO FUNCIONÁRIO'],
+        ['Matrícula', func.matricula],
+        ['Nome', func.nome],
+        ['Cargo', func.cargo || 'Não informado'],
+        ['Setor', func.setor || 'Não informado'],
+        ['Progresso', `${dados.progresso}% (${dados.itens_marcados}/${dados.itens_totais})`],
+        ['Não possui dependentes', func.naoPossuiDependentes ? 'Sim' : 'Não'],
+        []
+    ];
+    
+    // Aba do Checklist
+    const checklistData = [
+        ['CATEGORIA', 'DOCUMENTO', 'STATUS', 'OBSERVAÇÃO']
+    ];
+    
+    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (itens.length === 0) continue;
+        
+        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
+            checklistData.push([categoria, 'Não possui dependentes', 'N/A', '']);
+            continue;
+        }
+        
+        itens.forEach(item => {
+            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
+            let status = '';
+            if (itemData.naoAplicavel) {
+                status = 'Não Aplicável';
+            } else if (itemData.marcado) {
+                status = 'OK';
+            } else {
+                status = 'Pendente';
+            }
+            checklistData.push([categoria, item.nome, status, '']);
+        });
+    }
+    
+    const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
+    const wsChecklist = XLSX.utils.aoa_to_sheet(checklistData);
+    
+    // Ajustar largura das colunas
+    wsChecklist['!cols'] = [
+        { wch: 30 }, // Categoria
+        { wch: 50 }, // Documento
+        { wch: 15 }, // Status
+        { wch: 30 }  // Observação
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+    XLSX.utils.book_append_sheet(wb, wsChecklist, 'Checklist');
+    
+    // Salvar arquivo
+    XLSX.writeFile(wb, `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.xlsx`);
+}
+
+function exportarJSON() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário!');
+        return;
+    }
+
+    const dados = gerarDadosFuncionario(funcionarioSelecionado);
+    const jsonStr = JSON.stringify(dados, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dados.matricula}_${dados.nome.replace(/\s+/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 function gerarRelatorio() {
     if (!funcionarioSelecionado) {
         alert('Selecione um funcionário!');
@@ -391,11 +550,8 @@ function gerarRelatorio() {
     }
 
     const func = funcionarios[funcionarioSelecionado];
-    const checklist = func.checklist || {};
-    const itensValidos = Object.values(checklist).filter(item => !item.naoAplicavel);
-    const totalItens = itensValidos.length;
-    const itensMarcados = itensValidos.filter(item => item.marcado).length;
-    const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
+    const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
+    const percentual = total > 0 ? Math.round((marcados / total) * 100) : 0;
 
     let relatorio = `CHECKLIST ADMISSIONAL\n`;
     relatorio += `================================\n\n`;
@@ -403,16 +559,23 @@ function gerarRelatorio() {
     relatorio += `Nome: ${func.nome}\n`;
     relatorio += `Cargo: ${func.cargo || 'Não informado'}\n`;
     relatorio += `Setor: ${func.setor || 'Não informado'}\n`;
-    relatorio += `Progresso: ${percentual}% (${itensMarcados}/${totalItens})\n\n`;
+    relatorio += `Progresso: ${percentual}% (${marcados}/${total})\n\n`;
     relatorio += `================================\n\n`;
 
     for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
         if (itens.length === 0) continue;
 
+        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
+            relatorio += `${categoria}:\n`;
+            relatorio += `--------------------------------\n`;
+            relatorio += `[➖] Não possui dependentes\n\n`;
+            continue;
+        }
+
         relatorio += `${categoria}:\n`;
         relatorio += `--------------------------------\n`;
         itens.forEach(item => {
-            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
+            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
             let marcado = '[ ]';
             if (itemData.naoAplicavel) {
                 marcado = '[➖]';
@@ -448,11 +611,8 @@ function exportarPDF() {
     }
 
     const func = funcionarios[funcionarioSelecionado];
-    const checklist = func.checklist || {};
-    const itensValidos = Object.values(checklist).filter(item => !item.naoAplicavel);
-    const totalItens = itensValidos.length;
-    const itensMarcados = itensValidos.filter(item => item.marcado).length;
-    const percentual = totalItens > 0 ? Math.round((itensMarcados / totalItens) * 100) : 0;
+    const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
+    const percentual = total > 0 ? Math.round((marcados / total) * 100) : 0;
 
     // Criar documento PDF
     const { jsPDF } = window.jspdf;
@@ -487,7 +647,7 @@ function exportarPDF() {
     // Progresso
     const statusColor = percentual === 100 ? [0, 200, 83] : percentual > 0 ? [255, 214, 0] : [107, 114, 128];
     doc.setTextColor(statusColor[0], statusColor[1], statusColor[2]);
-    doc.text(`Progresso: ${percentual}% (${itensMarcados}/${totalItens})`, marginLeft, y);
+    doc.text(`Progresso: ${percentual}% (${marcados}/${total})`, marginLeft, y);
     y += lineHeight * 1.5;
     
     // Linha separadora
@@ -513,6 +673,15 @@ function exportarPDF() {
         doc.text(`🔹 ${categoria}`, marginLeft, y);
         y += lineHeight;
         
+        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
+            doc.setFontSize(9);
+            doc.setTextColor(204, 215, 233);
+            doc.text(`[➖] Não possui dependentes`, marginLeft + 5, y);
+            y += lineHeight;
+            y += lineHeight / 2;
+            continue;
+        }
+        
         // Itens
         doc.setFontSize(9);
         doc.setTextColor(204, 215, 233);
@@ -524,7 +693,7 @@ function exportarPDF() {
                 y = 20;
             }
             
-            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
+            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
             let marcado = '[ ]';
             if (itemData.naoAplicavel) {
                 marcado = '[➖]';
@@ -557,6 +726,110 @@ function copiarRelatorio() {
     }).catch(() => {
         alert('Erro ao copiar relatório!');
     });
+}
+
+// Funções de importação
+function baixarTemplate() {
+    const template = [
+        ['matricula', 'nome', 'cargo', 'setor'],
+        ['001', 'João Silva', 'Analista de RH', 'Recursos Humanos'],
+        ['002', 'Maria Santos', 'Motorista', 'Logística'],
+        ['003', 'Pedro Oliveira', 'Auxiliar Administrativo', 'Administração']
+    ];
+    
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(template);
+    
+    // Ajustar largura das colunas
+    ws['!cols'] = [
+        { wch: 15 }, // matricula
+        { wch: 30 }, // nome
+        { wch: 25 }, // cargo
+        { wch: 25 }  // setor
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Funcionários');
+    XLSX.writeFile(wb, 'template_importacao_funcionarios.xlsx');
+}
+
+function importarArquivo(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const jsonData = XLSX.utils.sheet_to_json(sheet);
+            
+            processarImportacao(jsonData);
+        } catch (error) {
+            alert('Erro ao processar arquivo: ' + error.message);
+        }
+    };
+    reader.readAsArrayBuffer(file);
+    
+    // Limpar input
+    event.target.value = '';
+}
+
+function processarImportacao(dados) {
+    const modal = document.getElementById('importModal');
+    const message = document.getElementById('importMessage');
+    const progressFill = document.getElementById('progressFill');
+    let importados = 0;
+    let erros = 0;
+    
+    modal.classList.add('show');
+    message.textContent = `Processando importação... 0/${dados.length}`;
+    progressFill.style.width = '0%';
+    
+    setTimeout(() => {
+        dados.forEach((row, index) => {
+            try {
+                const matricula = row.matricula || row.Matricula || row.MATRICULA || '';
+                const nome = row.nome || row.Nome || row.NOME || '';
+                const cargo = row.cargo || row.Cargo || row.CARGO || '';
+                const setor = row.setor || row.Setor || row.SETOR || '';
+                
+                if (!matricula || !nome) {
+                    erros++;
+                } else {
+                    const id = Date.now() + index + Math.random();
+                    funcionarios[id] = {
+                        matricula: String(matricula).trim(),
+                        nome: String(nome).trim(),
+                        cargo: String(cargo || '').trim(),
+                        setor: String(setor || '').trim(),
+                        naoPossuiDependentes: false,
+                        checklist: criarChecklistVazio()
+                    };
+                    importados++;
+                }
+            } catch (error) {
+                erros++;
+            }
+            
+            // Atualizar progresso
+            const progresso = Math.round(((index + 1) / dados.length) * 100);
+            progressFill.style.width = progresso + '%';
+            message.textContent = `Processando importação... ${index + 1}/${dados.length}`;
+        });
+        
+        if (importados > 0) {
+            salvarFuncionarios();
+            renderizarSidebar();
+        }
+        
+        message.textContent = `Importação concluída! ${importados} funcionários importados, ${erros} erros.`;
+    }, 100);
+}
+
+function fecharImportModal() {
+    document.getElementById('importModal').classList.remove('show');
 }
 
 // Funções do modal
