@@ -862,6 +862,319 @@ function confirmarExclusao() {
     }
 }
 
+// Adicionar ao final do arquivo, antes das funções auxiliares
+
+// Variáveis para restauração
+let dadosRestauracao = null;
+
+// Funções de Backup
+function backupSelecionado() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário para fazer backup!');
+        return;
+    }
+
+    const modal = document.getElementById('backupModal');
+    const title = document.getElementById('backupModalTitle');
+    const message = document.getElementById('backupMessage');
+    const progressFill = document.getElementById('backupProgressFill');
+    
+    title.textContent = 'Backup em Andamento';
+    message.textContent = 'Gerando backup do funcionário selecionado...';
+    progressFill.style.width = '50%';
+    modal.classList.add('show');
+    
+    setTimeout(() => {
+        const func = funcionarios[funcionarioSelecionado];
+        const dadosBackup = {
+            metadados: {
+                versao: '2.0',
+                data: new Date().toISOString(),
+                tipo: 'backup_unitario',
+                total_funcionarios: 1
+            },
+            funcionarios: {
+                [funcionarioSelecionado]: func
+            }
+        };
+        
+        progressFill.style.width = '100%';
+        message.textContent = 'Backup concluído! Preparando download...';
+        
+        setTimeout(() => {
+            const jsonStr = JSON.stringify(dadosBackup, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `backup_${func.matricula}_${func.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0,10)}.backup`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            setTimeout(() => {
+                fecharBackupModal();
+            }, 1500);
+        }, 500);
+    }, 500);
+}
+
+function backupTodos() {
+    const total = Object.keys(funcionarios).length;
+    
+    if (total === 0) {
+        alert('Não há funcionários para fazer backup!');
+        return;
+    }
+
+    const modal = document.getElementById('backupModal');
+    const title = document.getElementById('backupModalTitle');
+    const message = document.getElementById('backupMessage');
+    const progressFill = document.getElementById('backupProgressFill');
+    
+    title.textContent = 'Backup Geral em Andamento';
+    message.textContent = `Processando backup de ${total} funcionários...`;
+    progressFill.style.width = '0%';
+    modal.classList.add('show');
+    
+    let progresso = 0;
+    const intervalo = setInterval(() => {
+        progresso += 10;
+        progressFill.style.width = progresso + '%';
+        message.textContent = `Processando backup de ${total} funcionários... ${progresso}%`;
+        
+        if (progresso >= 100) {
+            clearInterval(intervalo);
+            
+            const dadosBackup = {
+                metadados: {
+                    versao: '2.0',
+                    data: new Date().toISOString(),
+                    tipo: 'backup_completo',
+                    total_funcionarios: total,
+                    estatisticas: calcularEstatisticasBackup()
+                },
+                funcionarios: funcionarios
+            };
+            
+            message.textContent = 'Backup concluído! Preparando download...';
+            
+            setTimeout(() => {
+                const jsonStr = JSON.stringify(dadosBackup, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `backup_completo_${new Date().toISOString().slice(0,10)}.backup`;
+                a.click();
+                URL.revokeObjectURL(url);
+                
+                setTimeout(() => {
+                    fecharBackupModal();
+                }, 1500);
+            }, 500);
+        }
+    }, 200);
+}
+
+function calcularEstatisticasBackup() {
+    const stats = {
+        total_funcionarios: Object.keys(funcionarios).length,
+        total_completos: 0,
+        total_andamento: 0,
+        total_nao_iniciados: 0,
+        por_setor: {},
+        por_cargo: {}
+    };
+    
+    Object.values(funcionarios).forEach(func => {
+        const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
+        const percentual = total > 0 ? Math.round((marcados / total) * 100) : 0;
+        
+        if (percentual === 100) stats.total_completos++;
+        else if (percentual > 0) stats.total_andamento++;
+        else stats.total_nao_iniciados++;
+        
+        // Estatísticas por setor
+        if (func.setor) {
+            stats.por_setor[func.setor] = (stats.por_setor[func.setor] || 0) + 1;
+        }
+        
+        // Estatísticas por cargo
+        if (func.cargo) {
+            stats.por_cargo[func.cargo] = (stats.por_cargo[func.cargo] || 0) + 1;
+        }
+    });
+    
+    return stats;
+}
+
+function fecharBackupModal() {
+    document.getElementById('backupModal').classList.remove('show');
+    document.getElementById('backupProgressFill').style.width = '0%';
+}
+
+// Funções de Restauração
+function restaurarBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const modal = document.getElementById('restoreModal');
+    const message = document.getElementById('restoreMessage');
+    const progressFill = document.getElementById('restoreProgressFill');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewContent = document.getElementById('previewContent');
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    
+    message.textContent = 'Lendo arquivo de backup...';
+    progressFill.style.width = '30%';
+    modal.classList.add('show');
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const dados = JSON.parse(e.target.result);
+            
+            // Validar estrutura do backup
+            if (!dados.metadados || !dados.funcionarios) {
+                throw new Error('Arquivo de backup inválido!');
+            }
+            
+            progressFill.style.width = '60%';
+            message.textContent = 'Analisando dados do backup...';
+            
+            // Armazenar dados para confirmação
+            dadosRestauracao = dados;
+            
+            // Gerar prévia
+            gerarPreviaRestauracao(dados, previewContent);
+            
+            progressFill.style.width = '100%';
+            message.textContent = `Backup carregado: ${dados.metadados.total_funcionarios} funcionários encontrados.`;
+            previewContainer.style.display = 'block';
+            confirmBtn.style.display = 'inline-block';
+            
+        } catch (error) {
+            message.textContent = 'Erro ao ler backup: ' + error.message;
+            progressFill.style.width = '0%';
+        }
+    };
+    reader.readAsText(file);
+    
+    // Limpar input
+    event.target.value = '';
+}
+
+function gerarPreviaRestauracao(dados, container) {
+    const totalBackup = dados.metadados.total_funcionarios;
+    const totalAtual = Object.keys(funcionarios).length;
+    
+    let html = `
+        <div class="backup-info">
+            <div class="backup-info-row">
+                <span>Data do backup:</span>
+                <strong>${new Date(dados.metadados.data).toLocaleString('pt-BR')}</strong>
+            </div>
+            <div class="backup-info-row">
+                <span>Versão:</span>
+                <strong>${dados.metadados.versao}</strong>
+            </div>
+            <div class="backup-info-row">
+                <span>Tipo:</span>
+                <strong>${dados.metadados.tipo === 'backup_completo' ? 'Backup Completo' : 'Backup Unitário'}</strong>
+            </div>
+            <div class="backup-info-divider"></div>
+            <div class="backup-info-row">
+                <span>Funcionários no backup:</span>
+                <strong>${totalBackup}</strong>
+            </div>
+            <div class="backup-info-row">
+                <span>Funcionários atuais:</span>
+                <strong>${totalAtual}</strong>
+            </div>
+        </div>
+    `;
+    
+    html += '<h4 style="color: #4f9eff; margin: 10px 0;">Funcionários no backup:</h4>';
+    
+    Object.entries(dados.funcionarios).forEach(([id, func]) => {
+        const existe = funcionarios[id];
+        const status = existe ? 'atualizado' : 'novo';
+        const statusText = existe ? '🔄 Atualizar' : '➕ Novo';
+        const statusClass = existe ? 'atualizado' : 'novo';
+        
+        html += `
+            <div class="preview-item">
+                <div class="preview-item-info">
+                    <span class="preview-item-matricula">${func.matricula}</span>
+                    <span class="preview-item-nome">${func.nome}</span>
+                </div>
+                <span class="preview-item-status ${statusClass}">${statusText}</span>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function confirmarRestauracao() {
+    if (!dadosRestauracao) return;
+    
+    const modal = document.getElementById('restoreModal');
+    const message = document.getElementById('restoreMessage');
+    const progressFill = document.getElementById('restoreProgressFill');
+    const previewContainer = document.getElementById('previewContainer');
+    const confirmBtn = document.getElementById('confirmRestoreBtn');
+    
+    message.textContent = 'Restaurando dados...';
+    progressFill.style.width = '0%';
+    previewContainer.style.display = 'none';
+    confirmBtn.style.display = 'none';
+    
+    const funcionariosBackup = dadosRestauracao.funcionarios;
+    const total = Object.keys(funcionariosBackup).length;
+    let processados = 0;
+    
+    const intervalo = setInterval(() => {
+        processados++;
+        const percentual = Math.round((processados / total) * 100);
+        progressFill.style.width = percentual + '%';
+        message.textContent = `Restaurando... ${processados}/${total} funcionários`;
+        
+        if (processados >= total) {
+            clearInterval(intervalo);
+            
+            // Aplicar restauração
+            Object.assign(funcionarios, funcionariosBackup);
+            salvarFuncionarios();
+            
+            message.textContent = 'Restauração concluída com sucesso!';
+            
+            setTimeout(() => {
+                fecharRestoreModal();
+                renderizarSidebar();
+                if (funcionarioSelecionado) {
+                    carregarFuncionario(funcionarioSelecionado);
+                }
+            }, 1500);
+        }
+    }, 100);
+}
+
+function cancelarRestauracao() {
+    dadosRestauracao = null;
+    fecharRestoreModal();
+}
+
+function fecharRestoreModal() {
+    document.getElementById('restoreModal').classList.remove('show');
+    document.getElementById('restoreProgressFill').style.width = '0%';
+    document.getElementById('previewContainer').style.display = 'none';
+    document.getElementById('confirmRestoreBtn').style.display = 'none';
+    dadosRestauracao = null;
+}
+
+// Função auxiliar para calcular estatísticas de backup (já incluída no backupTodos)
+
 // Funções auxiliares
 function limparCampos() {
     document.getElementById('matricula').value = '';
