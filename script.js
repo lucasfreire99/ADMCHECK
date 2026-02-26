@@ -32,19 +32,32 @@ const CHECKLIST_ESTRUTURA = {
     ],
     "Registro Profissional": [
         { nome: "Registro Profissional (quando profissão regulamentada)", podeNaoAplicavel: true },
+        { nome: "Registro Profissional Pendente", podeNaoAplicavel: false }
     ],
-    "Dependentes": [
-        { nome: "RG e CPF do Cônjuge", podeNaoAplicavel: false },
-        { nome: "Certidão de Casamento / União Estável", podeNaoAplicavel: false },
-        { nome: "RG e CPF dos Filhos", podeNaoAplicavel: false },
-        { nome: "Cartão de Vacina dos Filhos", podeNaoAplicavel: false },
-        { nome: "Declaração Escolar dos Filhos", podeNaoAplicavel: false }
-    ]
+    "Dependentes": {
+        titulo: "Dependentes",
+        grupos: [
+            {
+                nome: "Cônjuge",
+                itens: [
+                    { nome: "RG e CPF do Cônjuge", podeNaoAplicavel: false },
+                    { nome: "Certidão de Casamento / União Estável", podeNaoAplicavel: false }
+                ]
+            },
+            {
+                nome: "Filhos",
+                itens: [
+                    { nome: "RG e CPF dos Filhos", podeNaoAplicavel: false },
+                    { nome: "Cartão de Vacina dos Filhos", podeNaoAplicavel: false },
+                    { nome: "Declaração Escolar dos Filhos", podeNaoAplicavel: false }
+                ]
+            }
+        ]
+    }
 };
 
 // Estado global
 let funcionarios = {};
-let funcionariosFiltrados = [];
 let funcionarioSelecionado = null;
 let excluirId = null;
 let termoPesquisa = '';
@@ -97,14 +110,30 @@ function salvarFuncionarios() {
 // Função para criar checklist vazio
 function criarChecklistVazio() {
     const checklist = {};
-    for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
-        itens.forEach(item => {
-            checklist[item.nome] = { 
-                marcado: false, 
-                naoAplicavel: false 
-            };
-        });
+    
+    // Processar categorias normais
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "Dependentes") {
+            // Processar grupos de dependentes
+            conteudo.grupos.forEach(grupo => {
+                grupo.itens.forEach(item => {
+                    checklist[item.nome] = { 
+                        marcado: false, 
+                        naoAplicavel: false 
+                    };
+                });
+            });
+        } else if (Array.isArray(conteudo)) {
+            // Categorias com array de itens
+            conteudo.forEach(item => {
+                checklist[item.nome] = { 
+                    marcado: false, 
+                    naoAplicavel: false 
+                };
+            });
+        }
     }
+    
     return checklist;
 }
 
@@ -130,43 +159,89 @@ function atualizarTotalFuncionarios() {
     document.getElementById('totalFuncionarios').textContent = total;
 }
 
-// Função para calcular itens válidos (ignorando não aplicáveis e considerando escolaridade como 1 item)
+// Função para verificar se tem cônjuge
+function temConjuge(checklist) {
+    if (!checklist) return false;
+    const itemConjuge = checklist["RG e CPF do Cônjuge"];
+    const itemCasamento = checklist["Certidão de Casamento / União Estável"];
+    
+    // Considera que tem cônjuge se pelo menos um item relacionado a cônjuge estiver marcado
+    // e não estiver como "Não Aplicável"
+    return (itemConjuge && itemConjuge.marcado && !itemConjuge.naoAplicavel) ||
+           (itemCasamento && itemCasamento.marcado && !itemCasamento.naoAplicavel);
+}
+
+// Função para verificar se tem filhos
+function temFilhos(checklist) {
+    if (!checklist) return false;
+    const itemRGFilhos = checklist["RG e CPF dos Filhos"];
+    const itemVacinaFilhos = checklist["Cartão de Vacina dos Filhos"];
+    const itemEscolaFilhos = checklist["Declaração Escolar dos Filhos"];
+    
+    // Considera que tem filhos se pelo menos um item relacionado a filhos estiver marcado
+    // e não estiver como "Não Aplicável"
+    return (itemRGFilhos && itemRGFilhos.marcado && !itemRGFilhos.naoAplicavel) ||
+           (itemVacinaFilhos && itemVacinaFilhos.marcado && !itemVacinaFilhos.naoAplicavel) ||
+           (itemEscolaFilhos && itemEscolaFilhos.marcado && !itemEscolaFilhos.naoAplicavel);
+}
+
+// Função para calcular itens válidos considerando as regras de dependentes
 function calcularItensValidos(checklist, naoPossuiDependentes) {
     if (!checklist) return { total: 0, marcados: 0 };
     
     let total = 0;
     let marcados = 0;
     
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-        
-        // Pular dependentes se não possui
-        if (categoria === "Dependentes" && naoPossuiDependentes) {
-            continue;
-        }
-        
-        if (categoria === "Escolaridade") {
-            // Escolaridade conta como 1 item no total
-            total++;
-            
-            // Verificar se algum item de escolaridade está marcado
-            const escolaridadeMarcada = itens.some(item => 
-                checklist[item.nome] && checklist[item.nome].marcado && !checklist[item.nome].naoAplicavel
-            );
-            if (escolaridadeMarcada) {
-                marcados++;
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "Dependentes") {
+            // Se não possui dependentes, pular toda a categoria
+            if (naoPossuiDependentes) {
+                continue;
             }
-        } else {
-            // Demais categorias: cada item conta individualmente
-            itens.forEach(item => {
-                const itemData = checklist[item.nome];
-                if (itemData && !itemData.naoAplicavel) {
-                    total++;
-                    if (itemData.marcado) {
-                        marcados++;
-                    }
+            
+            const temConjugeFlag = temConjuge(checklist);
+            const temFilhosFlag = temFilhos(checklist);
+            
+            // Processar cada grupo de dependentes
+            conteudo.grupos.forEach(grupo => {
+                let grupoAtivo = false;
+                
+                if (grupo.nome === "Cônjuge" && temConjugeFlag) {
+                    grupoAtivo = true;
+                } else if (grupo.nome === "Filhos" && temFilhosFlag) {
+                    grupoAtivo = true;
                 }
+                
+                grupo.itens.forEach(item => {
+                    const itemData = checklist[item.nome];
+                    if (itemData && !itemData.naoAplicavel) {
+                        // Só conta se o grupo estiver ativo
+                        if (grupoAtivo) {
+                            total++;
+                            if (itemData.marcado) marcados++;
+                        }
+                    }
+                });
             });
+        } else if (Array.isArray(conteudo)) {
+            if (categoria === "Escolaridade") {
+                // Escolaridade conta como 1 item no total
+                total++;
+                // Verificar se algum item de escolaridade está marcado
+                const escolaridadeMarcada = conteudo.some(item => 
+                    checklist[item.nome] && checklist[item.nome].marcado && !checklist[item.nome].naoAplicavel
+                );
+                if (escolaridadeMarcada) marcados++;
+            } else {
+                // Demais categorias: cada item conta individualmente
+                conteudo.forEach(item => {
+                    const itemData = checklist[item.nome];
+                    if (itemData && !itemData.naoAplicavel) {
+                        total++;
+                        if (itemData.marcado) marcados++;
+                    }
+                });
+            }
         }
     }
     
@@ -243,86 +318,157 @@ function renderizarChecklist() {
     const naoPossuiDependentes = funcionario.naoPossuiDependentes || false;
     document.getElementById('naoPossuiDependentes').checked = naoPossuiDependentes;
 
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "DOCUMENTOS OPCIONAIS / CONDICIONAIS") continue;
+        
+        if (categoria === "Dependentes") {
+            // Se não possui dependentes, pular a categoria
+            if (naoPossuiDependentes) {
+                continue;
+            }
+            
+            const temConjugeFlag = temConjuge(checklist);
+            const temFilhosFlag = temFilhos(checklist);
+            
+            const categoriaDiv = document.createElement('div');
+            categoriaDiv.className = 'checklist-categoria';
 
-        // Se não possui dependentes, pular a categoria Dependentes
-        if (categoria === "Dependentes" && naoPossuiDependentes) {
-            continue;
-        }
+            const titulo = document.createElement('h3');
+            titulo.className = 'categoria-titulo';
+            titulo.textContent = `🔹 ${conteudo.titulo}`;
+            categoriaDiv.appendChild(titulo);
 
-        const categoriaDiv = document.createElement('div');
-        categoriaDiv.className = 'checklist-categoria';
-
-        const titulo = document.createElement('h3');
-        titulo.className = 'categoria-titulo';
-        titulo.textContent = `🔹 ${categoria}`;
-        categoriaDiv.appendChild(titulo);
-
-        itens.forEach(item => {
-            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            const itemDiv = document.createElement('div');
-            itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
-
-            // Checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
-            checkbox.checked = itemData.marcado || false;
-            checkbox.disabled = itemData.naoAplicavel;
-            checkbox.onchange = () => {
-                if (item.exclusivo && checkbox.checked) {
-                    // Se for item exclusivo, desmarcar outros da mesma categoria
-                    desmarcarOutrosExclusivos(categoria, item.nome);
+            // Renderizar cada grupo
+            conteudo.grupos.forEach(grupo => {
+                const grupoDiv = document.createElement('div');
+                grupoDiv.className = 'checklist-grupo';
+                
+                const grupoTitulo = document.createElement('h4');
+                grupoTitulo.className = 'grupo-titulo';
+                grupoTitulo.textContent = grupo.nome;
+                
+                // Mostrar aviso se o grupo não está ativo
+                let grupoAtivo = false;
+                if (grupo.nome === "Cônjuge" && temConjugeFlag) {
+                    grupoAtivo = true;
+                } else if (grupo.nome === "Filhos" && temFilhosFlag) {
+                    grupoAtivo = true;
                 }
-                atualizarStatusAposMudanca();
-            };
-
-            // Label
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = item.nome;
-
-            itemDiv.appendChild(checkbox);
-            itemDiv.appendChild(label);
-
-            // Select para "Não Aplicável" (se aplicável)
-            if (item.podeNaoAplicavel) {
-                const select = document.createElement('select');
-                select.className = 'status-select';
-                select.onchange = (e) => {
-                    const valor = e.target.value;
-                    if (valor === 'naoAplicavel') {
-                        itemData.naoAplicavel = true;
-                        checkbox.checked = false;
-                        checkbox.disabled = true;
-                    } else {
-                        itemData.naoAplicavel = false;
-                        checkbox.disabled = false;
-                    }
+                
+                if (!grupoAtivo) {
+                    const aviso = document.createElement('div');
+                    aviso.className = 'grupo-aviso';
+                    aviso.textContent = `⚠️ Nenhum documento de ${grupo.nome.toLowerCase()} marcado. Os itens abaixo não serão contabilizados no progresso.`;
+                    grupoDiv.appendChild(aviso);
+                }
+                
+                grupoDiv.appendChild(grupoTitulo);
+                
+                grupo.itens.forEach(item => {
+                    const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
+                    const itemDiv = document.createElement('div');
                     itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
+
+                    // Checkbox
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
+                    checkbox.checked = itemData.marcado || false;
+                    checkbox.disabled = itemData.naoAplicavel;
+                    checkbox.onchange = () => {
+                        atualizarStatusAposMudanca();
+                    };
+
+                    // Label
+                    const label = document.createElement('label');
+                    label.htmlFor = checkbox.id;
+                    label.textContent = item.nome;
+
+                    itemDiv.appendChild(checkbox);
+                    itemDiv.appendChild(label);
+
+                    grupoDiv.appendChild(itemDiv);
+                });
+                
+                categoriaDiv.appendChild(grupoDiv);
+            });
+
+            container.appendChild(categoriaDiv);
+            
+        } else if (Array.isArray(conteudo) && conteudo.length > 0) {
+            const categoriaDiv = document.createElement('div');
+            categoriaDiv.className = 'checklist-categoria';
+
+            const titulo = document.createElement('h3');
+            titulo.className = 'categoria-titulo';
+            titulo.textContent = `🔹 ${categoria}`;
+            categoriaDiv.appendChild(titulo);
+
+            conteudo.forEach(item => {
+                const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
+                const itemDiv = document.createElement('div');
+                itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
+
+                // Checkbox
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
+                checkbox.checked = itemData.marcado || false;
+                checkbox.disabled = itemData.naoAplicavel;
+                checkbox.onchange = () => {
+                    if (item.exclusivo && checkbox.checked) {
+                        // Se for item exclusivo, desmarcar outros da mesma categoria
+                        desmarcarOutrosExclusivos(categoria, item.nome);
+                    }
                     atualizarStatusAposMudanca();
                 };
 
-                const option1 = document.createElement('option');
-                option1.value = 'normal';
-                option1.textContent = '✔️ Normal';
-                option1.selected = !itemData.naoAplicavel;
+                // Label
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = item.nome;
 
-                const option2 = document.createElement('option');
-                option2.value = 'naoAplicavel';
-                option2.textContent = '➖ Não Aplicável';
-                option2.selected = itemData.naoAplicavel;
+                itemDiv.appendChild(checkbox);
+                itemDiv.appendChild(label);
 
-                select.appendChild(option1);
-                select.appendChild(option2);
-                itemDiv.appendChild(select);
-            }
+                // Select para "Não Aplicável" (se aplicável)
+                if (item.podeNaoAplicavel) {
+                    const select = document.createElement('select');
+                    select.className = 'status-select';
+                    select.onchange = (e) => {
+                        const valor = e.target.value;
+                        if (valor === 'naoAplicavel') {
+                            itemData.naoAplicavel = true;
+                            checkbox.checked = false;
+                            checkbox.disabled = true;
+                        } else {
+                            itemData.naoAplicavel = false;
+                            checkbox.disabled = false;
+                        }
+                        itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
+                        atualizarStatusAposMudanca();
+                    };
 
-            categoriaDiv.appendChild(itemDiv);
-        });
+                    const option1 = document.createElement('option');
+                    option1.value = 'normal';
+                    option1.textContent = '✔️ Normal';
+                    option1.selected = !itemData.naoAplicavel;
 
-        container.appendChild(categoriaDiv);
+                    const option2 = document.createElement('option');
+                    option2.value = 'naoAplicavel';
+                    option2.textContent = '➖ Não Aplicável';
+                    option2.selected = itemData.naoAplicavel;
+
+                    select.appendChild(option1);
+                    select.appendChild(option2);
+                    itemDiv.appendChild(select);
+                }
+
+                categoriaDiv.appendChild(itemDiv);
+            });
+
+            container.appendChild(categoriaDiv);
+        }
     }
 }
 
@@ -403,19 +549,33 @@ function salvarChecklist() {
     const checklist = {};
 
     // Pega todos os itens do checklist atual
-    for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
-        itens.forEach(item => {
-            const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
-            if (checkbox) {
-                const select = checkbox.parentElement.querySelector('.status-select');
-                const naoAplicavel = select ? select.value === 'naoAplicavel' : false;
-                
-                checklist[item.nome] = {
-                    marcado: checkbox.checked,
-                    naoAplicavel: naoAplicavel
-                };
-            }
-        });
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "Dependentes") {
+            conteudo.grupos.forEach(grupo => {
+                grupo.itens.forEach(item => {
+                    const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
+                    if (checkbox) {
+                        checklist[item.nome] = {
+                            marcado: checkbox.checked,
+                            naoAplicavel: false // Dependentes não têm opção "Não Aplicável"
+                        };
+                    }
+                });
+            });
+        } else if (Array.isArray(conteudo)) {
+            conteudo.forEach(item => {
+                const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
+                if (checkbox) {
+                    const select = checkbox.parentElement.querySelector('.status-select');
+                    const naoAplicavel = select ? select.value === 'naoAplicavel' : false;
+                    
+                    checklist[item.nome] = {
+                        marcado: checkbox.checked,
+                        naoAplicavel: naoAplicavel
+                    };
+                }
+            });
+        }
     }
 
     funcionario.checklist = checklist;
@@ -454,95 +614,6 @@ function gerarDadosFuncionario(id) {
     };
 }
 
-function exportarExcel() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return;
-    }
-
-    const func = funcionarios[funcionarioSelecionado];
-    const dados = gerarDadosFuncionario(funcionarioSelecionado);
-    
-    // Preparar dados para planilha
-    const wb = XLSX.utils.book_new();
-    
-    // Aba de Resumo
-    const resumoData = [
-        ['ADMCHECK - Checklist Admissional'],
-        ['Gerado em:', new Date().toLocaleString('pt-BR')],
-        [],
-        ['INFORMAÇÕES DO FUNCIONÁRIO'],
-        ['Matrícula', func.matricula],
-        ['Nome', func.nome],
-        ['Cargo', func.cargo || 'Não informado'],
-        ['Setor', func.setor || 'Não informado'],
-        ['Progresso', `${dados.progresso}% (${dados.itens_marcados}/${dados.itens_totais})`],
-        ['Não possui dependentes', func.naoPossuiDependentes ? 'Sim' : 'Não'],
-        []
-    ];
-    
-    // Aba do Checklist
-    const checklistData = [
-        ['CATEGORIA', 'DOCUMENTO', 'STATUS', 'OBSERVAÇÃO']
-    ];
-    
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-        
-        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
-            checklistData.push([categoria, 'Não possui dependentes', 'N/A', '']);
-            continue;
-        }
-        
-        itens.forEach(item => {
-            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            let status = '';
-            if (itemData.naoAplicavel) {
-                status = 'Não Aplicável';
-            } else if (itemData.marcado) {
-                status = 'OK';
-            } else {
-                status = 'Pendente';
-            }
-            checklistData.push([categoria, item.nome, status, '']);
-        });
-    }
-    
-    const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
-    const wsChecklist = XLSX.utils.aoa_to_sheet(checklistData);
-    
-    // Ajustar largura das colunas
-    wsChecklist['!cols'] = [
-        { wch: 30 }, // Categoria
-        { wch: 50 }, // Documento
-        { wch: 15 }, // Status
-        { wch: 30 }  // Observação
-    ];
-    
-    XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
-    XLSX.utils.book_append_sheet(wb, wsChecklist, 'Checklist');
-    
-    // Salvar arquivo
-    XLSX.writeFile(wb, `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.xlsx`);
-}
-
-function exportarJSON() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return;
-    }
-
-    const dados = gerarDadosFuncionario(funcionarioSelecionado);
-    const jsonStr = JSON.stringify(dados, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${dados.matricula}_${dados.nome.replace(/\s+/g, '_')}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
 function gerarRelatorio() {
     if (!funcionarioSelecionado) {
         alert('Selecione um funcionário!');
@@ -562,29 +633,56 @@ function gerarRelatorio() {
     relatorio += `Progresso: ${percentual}% (${marcados}/${total})\n\n`;
     relatorio += `================================\n\n`;
 
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-
-        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "DOCUMENTOS OPCIONAIS / CONDICIONAIS") continue;
+        
+        if (categoria === "Dependentes") {
+            if (func.naoPossuiDependentes) {
+                relatorio += `${conteudo.titulo}:\n`;
+                relatorio += `--------------------------------\n`;
+                relatorio += `[➖] Não possui dependentes\n\n`;
+                continue;
+            }
+            
+            const temConjugeFlag = temConjuge(func.checklist);
+            const temFilhosFlag = temFilhos(func.checklist);
+            
+            relatorio += `${conteudo.titulo}:\n`;
+            relatorio += `--------------------------------\n`;
+            
+            conteudo.grupos.forEach(grupo => {
+                let grupoAtivo = false;
+                if (grupo.nome === "Cônjuge" && temConjugeFlag) {
+                    grupoAtivo = true;
+                } else if (grupo.nome === "Filhos" && temFilhosFlag) {
+                    grupoAtivo = true;
+                }
+                
+                if (grupoAtivo) {
+                    relatorio += `  ${grupo.nome}:\n`;
+                    grupo.itens.forEach(item => {
+                        const itemData = func.checklist[item.nome] || { marcado: false };
+                        const marcado = itemData.marcado ? '[X]' : '[ ]';
+                        relatorio += `    ${marcado} ${item.nome}\n`;
+                    });
+                }
+            });
+            relatorio += '\n';
+        } else if (Array.isArray(conteudo) && conteudo.length > 0) {
             relatorio += `${categoria}:\n`;
             relatorio += `--------------------------------\n`;
-            relatorio += `[➖] Não possui dependentes\n\n`;
-            continue;
+            conteudo.forEach(item => {
+                const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
+                let marcado = '[ ]';
+                if (itemData.naoAplicavel) {
+                    marcado = '[➖]';
+                } else if (itemData.marcado) {
+                    marcado = '[X]';
+                }
+                relatorio += `${marcado} ${item.nome}\n`;
+            });
+            relatorio += '\n';
         }
-
-        relatorio += `${categoria}:\n`;
-        relatorio += `--------------------------------\n`;
-        itens.forEach(item => {
-            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            let marcado = '[ ]';
-            if (itemData.naoAplicavel) {
-                marcado = '[➖]';
-            } else if (itemData.marcado) {
-                marcado = '[X]';
-            }
-            relatorio += `${marcado} ${item.nome}\n`;
-        });
-        relatorio += '\n';
     }
 
     return relatorio;
@@ -658,8 +756,8 @@ function exportarPDF() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(10);
     
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "DOCUMENTOS OPCIONAIS / CONDICIONAIS") continue;
         
         // Verificar se precisa de nova página
         if (y > 270) {
@@ -667,44 +765,85 @@ function exportarPDF() {
             y = 20;
         }
         
-        // Categoria
-        doc.setFontSize(11);
-        doc.setTextColor(183, 196, 217);
-        doc.text(`🔹 ${categoria}`, marginLeft, y);
-        y += lineHeight;
-        
-        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
-            doc.setFontSize(9);
-            doc.setTextColor(204, 215, 233);
-            doc.text(`[➖] Não possui dependentes`, marginLeft + 5, y);
-            y += lineHeight;
-            y += lineHeight / 2;
-            continue;
-        }
-        
-        // Itens
-        doc.setFontSize(9);
-        doc.setTextColor(204, 215, 233);
-        
-        itens.forEach(item => {
-            // Verificar se precisa de nova página
-            if (y > 270) {
-                doc.addPage();
-                y = 20;
+        if (categoria === "Dependentes") {
+            if (func.naoPossuiDependentes) {
+                doc.setFontSize(11);
+                doc.setTextColor(183, 196, 217);
+                doc.text(`🔹 ${conteudo.titulo}`, marginLeft, y);
+                y += lineHeight;
+                doc.setFontSize(9);
+                doc.setTextColor(204, 215, 233);
+                doc.text(`[➖] Não possui dependentes`, marginLeft + 5, y);
+                y += lineHeight;
+                y += lineHeight / 2;
+                continue;
             }
             
-            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            let marcado = '[ ]';
-            if (itemData.naoAplicavel) {
-                marcado = '[➖]';
-            } else if (itemData.marcado) {
-                marcado = '[X]';
-            }
-            doc.text(`${marcado} ${item.nome}`, marginLeft + 5, y);
+            const temConjugeFlag = temConjuge(func.checklist);
+            const temFilhosFlag = temFilhos(func.checklist);
+            
+            doc.setFontSize(11);
+            doc.setTextColor(183, 196, 217);
+            doc.text(`🔹 ${conteudo.titulo}`, marginLeft, y);
             y += lineHeight;
-        });
-        
-        y += lineHeight / 2;
+            
+            conteudo.grupos.forEach(grupo => {
+                let grupoAtivo = false;
+                if (grupo.nome === "Cônjuge" && temConjugeFlag) {
+                    grupoAtivo = true;
+                } else if (grupo.nome === "Filhos" && temFilhosFlag) {
+                    grupoAtivo = true;
+                }
+                
+                if (grupoAtivo) {
+                    doc.setFontSize(10);
+                    doc.setTextColor(204, 215, 233);
+                    doc.text(`  ${grupo.nome}:`, marginLeft, y);
+                    y += lineHeight;
+                    
+                    grupo.itens.forEach(item => {
+                        if (y > 270) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        
+                        const itemData = func.checklist[item.nome] || { marcado: false };
+                        const marcado = itemData.marcado ? '[X]' : '[ ]';
+                        doc.text(`    ${marcado} ${item.nome}`, marginLeft + 5, y);
+                        y += lineHeight;
+                    });
+                }
+            });
+            y += lineHeight / 2;
+            
+        } else if (Array.isArray(conteudo) && conteudo.length > 0) {
+            doc.setFontSize(11);
+            doc.setTextColor(183, 196, 217);
+            doc.text(`🔹 ${categoria}`, marginLeft, y);
+            y += lineHeight;
+            
+            doc.setFontSize(9);
+            doc.setTextColor(204, 215, 233);
+            
+            conteudo.forEach(item => {
+                if (y > 270) {
+                    doc.addPage();
+                    y = 20;
+                }
+                
+                const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
+                let marcado = '[ ]';
+                if (itemData.naoAplicavel) {
+                    marcado = '[➖]';
+                } else if (itemData.marcado) {
+                    marcado = '[X]';
+                }
+                doc.text(`${marcado} ${item.nome}`, marginLeft + 5, y);
+                y += lineHeight;
+            });
+            
+            y += lineHeight / 2;
+        }
     }
     
     // Rodapé
@@ -715,6 +854,119 @@ function exportarPDF() {
     
     // Salvar PDF
     doc.save(`${func.matricula}_${func.nome.replace(/\s+/g, '_')}.pdf`);
+}
+
+function exportarExcel() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário!');
+        return;
+    }
+
+    const func = funcionarios[funcionarioSelecionado];
+    const dados = gerarDadosFuncionario(funcionarioSelecionado);
+    
+    // Preparar dados para planilha
+    const wb = XLSX.utils.book_new();
+    
+    // Aba de Resumo
+    const resumoData = [
+        ['ADMCHECK - Checklist Admissional'],
+        ['Gerado em:', new Date().toLocaleString('pt-BR')],
+        [],
+        ['INFORMAÇÕES DO FUNCIONÁRIO'],
+        ['Matrícula', func.matricula],
+        ['Nome', func.nome],
+        ['Cargo', func.cargo || 'Não informado'],
+        ['Setor', func.setor || 'Não informado'],
+        ['Progresso', `${dados.progresso}% (${dados.itens_marcados}/${dados.itens_totais})`],
+        ['Não possui dependentes', func.naoPossuiDependentes ? 'Sim' : 'Não'],
+        []
+    ];
+    
+    // Aba do Checklist
+    const checklistData = [
+        ['CATEGORIA', 'DOCUMENTO', 'STATUS', 'GRUPO', 'OBSERVAÇÃO']
+    ];
+    
+    for (const [categoria, conteudo] of Object.entries(CHECKLIST_ESTRUTURA)) {
+        if (categoria === "DOCUMENTOS OPCIONAIS / CONDICIONAIS") continue;
+        
+        if (categoria === "Dependentes") {
+            if (func.naoPossuiDependentes) {
+                checklistData.push([categoria, 'Não possui dependentes', 'N/A', '', '']);
+                continue;
+            }
+            
+            const temConjugeFlag = temConjuge(func.checklist);
+            const temFilhosFlag = temFilhos(func.checklist);
+            
+            conteudo.grupos.forEach(grupo => {
+                let grupoAtivo = false;
+                if (grupo.nome === "Cônjuge" && temConjugeFlag) {
+                    grupoAtivo = true;
+                } else if (grupo.nome === "Filhos" && temFilhosFlag) {
+                    grupoAtivo = true;
+                }
+                
+                grupo.itens.forEach(item => {
+                    const itemData = func.checklist[item.nome] || { marcado: false };
+                    let status = itemData.marcado ? 'OK' : 'Pendente';
+                    if (!grupoAtivo) {
+                        status = 'Ignorado (sem ' + grupo.nome.toLowerCase() + ')';
+                    }
+                    checklistData.push([categoria, item.nome, status, grupo.nome, '']);
+                });
+            });
+        } else if (Array.isArray(conteudo) && conteudo.length > 0) {
+            conteudo.forEach(item => {
+                const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
+                let status = '';
+                if (itemData.naoAplicavel) {
+                    status = 'Não Aplicável';
+                } else if (itemData.marcado) {
+                    status = 'OK';
+                } else {
+                    status = 'Pendente';
+                }
+                checklistData.push([categoria, item.nome, status, '', '']);
+            });
+        }
+    }
+    
+    const wsResumo = XLSX.utils.aoa_to_sheet(resumoData);
+    const wsChecklist = XLSX.utils.aoa_to_sheet(checklistData);
+    
+    // Ajustar largura das colunas
+    wsChecklist['!cols'] = [
+        { wch: 30 }, // Categoria
+        { wch: 50 }, // Documento
+        { wch: 20 }, // Status
+        { wch: 15 }, // Grupo
+        { wch: 30 }  // Observação
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, wsResumo, 'Resumo');
+    XLSX.utils.book_append_sheet(wb, wsChecklist, 'Checklist');
+    
+    // Salvar arquivo
+    XLSX.writeFile(wb, `${func.matricula}_${func.nome.replace(/\s+/g, '_')}.xlsx`);
+}
+
+function exportarJSON() {
+    if (!funcionarioSelecionado) {
+        alert('Selecione um funcionário!');
+        return;
+    }
+
+    const dados = gerarDadosFuncionario(funcionarioSelecionado);
+    const jsonStr = JSON.stringify(dados, null, 2);
+    const blob = new Blob([jsonStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${dados.matricula}_${dados.nome.replace(/\s+/g, '_')}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
 
 function copiarRelatorio() {
@@ -832,36 +1084,6 @@ function fecharImportModal() {
     document.getElementById('importModal').classList.remove('show');
 }
 
-// Funções do modal
-function abrirModalExclusao(id) {
-    excluirId = id;
-    document.getElementById('modal').classList.add('show');
-}
-
-function fecharModal() {
-    document.getElementById('modal').classList.remove('show');
-    excluirId = null;
-}
-
-function confirmarExclusao() {
-    if (excluirId) {
-        delete funcionarios[excluirId];
-        salvarFuncionarios();
-
-        if (funcionarioSelecionado === excluirId) {
-            funcionarioSelecionado = null;
-            document.getElementById('matricula').value = '';
-            document.getElementById('nome').value = '';
-            document.getElementById('cargo').value = '';
-            document.getElementById('setor').value = '';
-            renderizarChecklist();
-        }
-
-        renderizarSidebar();
-        fecharModal();
-    }
-}
-
 // Funções de Backup
 function backupFuncionarioAtual() {
     if (!funcionarioSelecionado) {
@@ -885,7 +1107,7 @@ function backupFuncionarioAtual() {
             const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
             
             const backupData = {
-                versao: '2.0',
+                versao: '3.0',
                 data: new Date().toISOString(),
                 tipo: 'backup_funcionario',
                 funcionario: {
@@ -973,12 +1195,12 @@ function backupTodosFuncionarios() {
             }
             
             const backupData = {
-                versao: '2.0',
+                versao: '3.0',
                 data: new Date().toISOString(),
                 tipo: 'backup_completo',
                 metadados: {
                     totalFuncionarios: totalFuncionarios,
-                    versaoSistema: 'ADMCHECK 2.0'
+                    versaoSistema: 'ADMCHECK 3.0'
                 },
                 funcionarios: funcionariosBackup
             };
@@ -1183,397 +1405,33 @@ function fecharRestoreModal() {
     window.backupDataParaRestaurar = null;
 }
 
-// Adicione ou substitua a função calcularItensValidos por esta versão atualizada
-
-function calcularItensValidos(checklist, naoPossuiDependentes, funcionarioId = null) {
-    if (!checklist) return { total: 0, marcados: 0 };
-    
-    let total = 0;
-    let marcados = 0;
-    
-    // Se não possui dependentes, retorna sem contar a categoria
-    if (naoPossuiDependentes) {
-        return { total: 0, marcados: 0 };
-    }
-    
-    // Verificar estado dos dependentes
-    const possuiConjuge = verificarPossuiConjuge(checklist);
-    const possuiFilhos = verificarPossuiFilhos(checklist);
-    
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-        
-        // Pular dependentes se não possui nenhum
-        if (categoria === "Dependentes") {
-            // Se não possui cônjuge nem filhos, não conta nada
-            if (!possuiConjuge && !possuiFilhos) {
-                continue;
-            }
-            
-            // Processar itens de dependentes com a nova lógica
-            itens.forEach(item => {
-                const itemData = checklist[item.nome];
-                
-                // Lógica para cônjuge
-                if (item.nome.includes("Cônjuge") || item.nome.includes("Casamento") || item.nome.includes("União Estável")) {
-                    // Só conta se possui cônjuge
-                    if (possuiConjuge && itemData && !itemData.naoAplicavel) {
-                        total++;
-                        if (itemData.marcado) marcados++;
-                    }
-                }
-                // Lógica para filhos
-                else if (item.nome.includes("Filhos") || item.nome.includes("Filho")) {
-                    // Só conta se possui filhos
-                    if (possuiFilhos && itemData && !itemData.naoAplicavel) {
-                        total++;
-                        if (itemData.marcado) marcados++;
-                    }
-                }
-            });
-            
-            continue;
-        }
-        
-        if (categoria === "Escolaridade") {
-            // Escolaridade conta como 1 item no total
-            total++;
-            
-            // Verificar se algum item de escolaridade está marcado
-            const escolaridadeMarcada = itens.some(item => 
-                checklist[item.nome] && checklist[item.nome].marcado && !checklist[item.nome].naoAplicavel
-            );
-            if (escolaridadeMarcada) {
-                marcados++;
-            }
-        } else {
-            // Demais categorias: cada item conta individualmente
-            itens.forEach(item => {
-                const itemData = checklist[item.nome];
-                if (itemData && !itemData.naoAplicavel) {
-                    total++;
-                    if (itemData.marcado) {
-                        marcados++;
-                    }
-                }
-            });
-        }
-    }
-    
-    return { total, marcados };
+// Funções do modal
+function abrirModalExclusao(id) {
+    excluirId = id;
+    document.getElementById('modal').classList.add('show');
 }
 
-// Funções auxiliares para verificar estado dos dependentes
-function verificarPossuiConjuge(checklist) {
-    // Verifica se existe documento de cônjuge marcado (não "Não Aplicável")
-    const itensConjuge = [
-        "RG e CPF do Cônjuge",
-        "Certidão de Casamento / União Estável"
-    ];
-    
-    return itensConjuge.some(item => {
-        const itemData = checklist[item];
-        return itemData && !itemData.naoAplicavel;
-    });
+function fecharModal() {
+    document.getElementById('modal').classList.remove('show');
+    excluirId = null;
 }
 
-function verificarPossuiFilhos(checklist) {
-    // Verifica se existe documento de filhos marcado (não "Não Aplicável")
-    const itensFilhos = [
-        "RG e CPF dos Filhos",
-        "Cartão de Vacina dos Filhos",
-        "Declaração Escolar dos Filhos"
-    ];
-    
-    return itensFilhos.some(item => {
-        const itemData = checklist[item];
-        return itemData && !itemData.naoAplicavel;
-    });
-}
+function confirmarExclusao() {
+    if (excluirId) {
+        delete funcionarios[excluirId];
+        salvarFuncionarios();
 
-// Atualizar a função salvarChecklist para incluir a nova lógica
-function salvarChecklist() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return;
-    }
-
-    const funcionario = funcionarios[funcionarioSelecionado];
-    const checklist = {};
-
-    // Pega todos os itens do checklist atual
-    for (const itens of Object.values(CHECKLIST_ESTRUTURA)) {
-        itens.forEach(item => {
-            const checkbox = document.getElementById(`check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`);
-            if (checkbox) {
-                const select = checkbox.parentElement.querySelector('.status-select');
-                const naoAplicavel = select ? select.value === 'naoAplicavel' : false;
-                
-                checklist[item.nome] = {
-                    marcado: checkbox.checked,
-                    naoAplicavel: naoAplicavel
-                };
-            }
-        });
-    }
-
-    funcionario.checklist = checklist;
-    
-    // Atualizar campos
-    funcionario.cargo = document.getElementById('cargo').value.trim();
-    funcionario.setor = document.getElementById('setor').value.trim();
-
-    salvarFuncionarios();
-    renderizarSidebar();
-    renderizarChecklist(); // Recarregar para atualizar a interface
-}
-
-// Atualizar a função renderizarChecklist para mostrar apenas itens relevantes
-function renderizarChecklist() {
-    const container = document.getElementById('checklistContainer');
-    container.innerHTML = '';
-
-    if (!funcionarioSelecionado || !funcionarios[funcionarioSelecionado]) {
-        container.innerHTML = '<p style="color: #6b7a8f; text-align: center; padding: 40px;">Selecione um funcionário para visualizar o checklist</p>';
-        document.getElementById('dependentesGlobalContainer').style.display = 'none';
-        return;
-    }
-
-    const funcionario = funcionarios[funcionarioSelecionado];
-    const checklist = funcionario.checklist || {};
-
-    // Mostrar/ocultar checkbox global de dependentes
-    document.getElementById('dependentesGlobalContainer').style.display = 'block';
-    const naoPossuiDependentes = funcionario.naoPossuiDependentes || false;
-    document.getElementById('naoPossuiDependentes').checked = naoPossuiDependentes;
-
-    // Verificar estado atual dos dependentes
-    const possuiConjuge = verificarPossuiConjuge(checklist);
-    const possuiFilhos = verificarPossuiFilhos(checklist);
-
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-
-        // Se não possui dependentes, pular a categoria Dependentes
-        if (categoria === "Dependentes" && naoPossuiDependentes) {
-            continue;
+        if (funcionarioSelecionado === excluirId) {
+            funcionarioSelecionado = null;
+            document.getElementById('matricula').value = '';
+            document.getElementById('nome').value = '';
+            document.getElementById('cargo').value = '';
+            document.getElementById('setor').value = '';
+            renderizarChecklist();
         }
 
-        const categoriaDiv = document.createElement('div');
-        categoriaDiv.className = 'checklist-categoria';
-
-        const titulo = document.createElement('h3');
-        titulo.className = 'categoria-titulo';
-        
-        // Adicionar indicadores visuais na categoria de dependentes
-        if (categoria === "Dependentes") {
-            let statusText = '';
-            if (possuiConjuge && possuiFilhos) {
-                statusText = '👨‍👩‍👧‍👦 Cônjuge + Filhos';
-            } else if (possuiConjuge) {
-                statusText = '👫 Apenas cônjuge';
-            } else if (possuiFilhos) {
-                statusText = '👶 Apenas filhos';
-            } else {
-                statusText = '➕ Nenhum dependente';
-            }
-            titulo.textContent = `🔹 ${categoria} - ${statusText}`;
-        } else {
-            titulo.textContent = `🔹 ${categoria}`;
-        }
-        
-        categoriaDiv.appendChild(titulo);
-
-        itens.forEach(item => {
-            // Lógica para exibir apenas itens relevantes de dependentes
-            if (categoria === "Dependentes") {
-                // Se não possui cônjuge, não mostrar itens de cônjuge
-                if (!possuiConjuge && (item.nome.includes("Cônjuge") || item.nome.includes("Casamento") || item.nome.includes("União Estável"))) {
-                    return;
-                }
-                // Se não possui filhos, não mostrar itens de filhos
-                if (!possuiFilhos && (item.nome.includes("Filhos") || item.nome.includes("Filho"))) {
-                    return;
-                }
-                // Se não possui nenhum, não mostrar nada
-                if (!possuiConjuge && !possuiFilhos) {
-                    return;
-                }
-            }
-
-            const itemData = checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            const itemDiv = document.createElement('div');
-            itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
-
-            // Checkbox
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `check_${item.nome.replace(/\s+/g, '_').replace(/[^\w]/g, '_')}`;
-            checkbox.checked = itemData.marcado || false;
-            checkbox.disabled = itemData.naoAplicavel;
-            checkbox.onchange = () => {
-                if (item.exclusivo && checkbox.checked) {
-                    // Se for item exclusivo, desmarcar outros da mesma categoria
-                    desmarcarOutrosExclusivos(categoria, item.nome);
-                }
-                atualizarStatusAposMudanca();
-            };
-
-            // Label
-            const label = document.createElement('label');
-            label.htmlFor = checkbox.id;
-            label.textContent = item.nome;
-
-            itemDiv.appendChild(checkbox);
-            itemDiv.appendChild(label);
-
-            // Select para "Não Aplicável" (se aplicável)
-            if (item.podeNaoAplicavel) {
-                const select = document.createElement('select');
-                select.className = 'status-select';
-                select.onchange = (e) => {
-                    const valor = e.target.value;
-                    if (valor === 'naoAplicavel') {
-                        itemData.naoAplicavel = true;
-                        checkbox.checked = false;
-                        checkbox.disabled = true;
-                    } else {
-                        itemData.naoAplicavel = false;
-                        checkbox.disabled = false;
-                    }
-                    itemDiv.className = `checklist-item ${itemData.naoAplicavel ? 'nao-aplicavel' : ''}`;
-                    atualizarStatusAposMudanca();
-                };
-
-                const option1 = document.createElement('option');
-                option1.value = 'normal';
-                option1.textContent = '✔️ Normal';
-                option1.selected = !itemData.naoAplicavel;
-
-                const option2 = document.createElement('option');
-                option2.value = 'naoAplicavel';
-                option2.textContent = '➖ Não Aplicável';
-                option2.selected = itemData.naoAplicavel;
-
-                select.appendChild(option1);
-                select.appendChild(option2);
-                itemDiv.appendChild(select);
-            }
-
-            categoriaDiv.appendChild(itemDiv);
-        });
-
-        // Só adicionar a categoria se tiver itens
-        if (categoriaDiv.children.length > 1) { // 1 é o título
-            container.appendChild(categoriaDiv);
-        }
-    }
-}
-
-// Atualizar a função toggleDependentesChecklist
-function toggleDependentesChecklist() {
-    if (!funcionarioSelecionado) return;
-
-    const naoPossuiDependentes = document.getElementById('naoPossuiDependentes').checked;
-    funcionarios[funcionarioSelecionado].naoPossuiDependentes = naoPossuiDependentes;
-    
-    // Se marcou "Não possui dependentes", resetar todos os itens de dependentes
-    if (naoPossuiDependentes) {
-        const funcionario = funcionarios[funcionarioSelecionado];
-        const itensDependentes = CHECKLIST_ESTRUTURA["Dependentes"];
-        itensDependentes.forEach(item => {
-            if (funcionario.checklist[item.nome]) {
-                funcionario.checklist[item.nome].marcado = false;
-                funcionario.checklist[item.nome].naoAplicavel = false;
-            }
-        });
-    }
-    
-    // Salvar e recarregar checklist
-    salvarFuncionarios();
-    renderizarChecklist();
-    renderizarSidebar();
-}
-
-// Atualizar a função gerarRelatorio para incluir a nova lógica
-function gerarRelatorio() {
-    if (!funcionarioSelecionado) {
-        alert('Selecione um funcionário!');
-        return null;
-    }
-
-    const func = funcionarios[funcionarioSelecionado];
-    const { total, marcados } = calcularItensValidos(func.checklist, func.naoPossuiDependentes);
-    const percentual = total > 0 ? Math.round((marcados / total) * 100) : 0;
-
-    let relatorio = `CHECKLIST ADMISSIONAL\n`;
-    relatorio += `================================\n\n`;
-    relatorio += `Matrícula: ${func.matricula}\n`;
-    relatorio += `Nome: ${func.nome}\n`;
-    relatorio += `Cargo: ${func.cargo || 'Não informado'}\n`;
-    relatorio += `Setor: ${func.setor || 'Não informado'}\n`;
-    relatorio += `Progresso: ${percentual}% (${marcados}/${total})\n\n`;
-    relatorio += `================================\n\n`;
-
-    const possuiConjuge = verificarPossuiConjuge(func.checklist);
-    const possuiFilhos = verificarPossuiFilhos(func.checklist);
-
-    for (const [categoria, itens] of Object.entries(CHECKLIST_ESTRUTURA)) {
-        if (itens.length === 0) continue;
-
-        if (categoria === "Dependentes" && func.naoPossuiDependentes) {
-            relatorio += `${categoria}:\n`;
-            relatorio += `--------------------------------\n`;
-            relatorio += `[➖] Não possui dependentes\n\n`;
-            continue;
-        }
-
-        relatorio += `${categoria}:\n`;
-        relatorio += `--------------------------------\n`;
-        
-        itens.forEach(item => {
-            // Lógica para exibir apenas itens relevantes de dependentes no relatório
-            if (categoria === "Dependentes") {
-                if (!possuiConjuge && (item.nome.includes("Cônjuge") || item.nome.includes("Casamento") || item.nome.includes("União Estável"))) {
-                    return;
-                }
-                if (!possuiFilhos && (item.nome.includes("Filhos") || item.nome.includes("Filho"))) {
-                    return;
-                }
-                if (!possuiConjuge && !possuiFilhos) {
-                    return;
-                }
-            }
-
-            const itemData = func.checklist[item.nome] || { marcado: false, naoAplicavel: false };
-            let marcado = '[ ]';
-            if (itemData.naoAplicavel) {
-                marcado = '[➖]';
-            } else if (itemData.marcado) {
-                marcado = '[X]';
-            }
-            relatorio += `${marcado} ${item.nome}\n`;
-        });
-        relatorio += '\n';
-    }
-
-    return relatorio;
-}
-
-// Função para fechar dropdowns (se não existir)
-if (typeof fecharDropdowns !== 'function') {
-    function fecharDropdowns() {
-        document.querySelectorAll('.dropdown-content').forEach(dropdown => {
-            dropdown.classList.remove('show');
-        });
-    }
-}
-
-// Função para toggle dropdown (se não existir)
-if (typeof toggleDropdown !== 'function') {
-    function toggleDropdown(id) {
-        const dropdown = document.getElementById(id);
-        dropdown.classList.toggle('show');
+        renderizarSidebar();
+        fecharModal();
     }
 }
 
