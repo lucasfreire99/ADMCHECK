@@ -18,7 +18,6 @@
             <!-- Campo de pesquisa -->
             <div class="search-container">
                 <input type="text" id="pesquisaFuncionario" placeholder="Buscar por matrícula ou nome..." class="search-input" onkeyup="filtrarFuncionarios()">
-                <span class="search-icon">🔍</span>
             </div>
             
             <div id="funcionariosLista" class="funcionarios-lista">
@@ -44,7 +43,7 @@
                         <!-- Menu de Exportação -->
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('exportDropdown')">
-                                Exportar ▼
+                                Exportar
                             </button>
                             <div id="exportDropdown" class="dropdown-content">
                                 <a href="#" onclick="exportarTxt()">📄 TXT</a>
@@ -57,7 +56,7 @@
                         <!-- Menu de Importação -->
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('importDropdown')">
-                                Importar ▼
+                                Importar
                             </button>
                             <div id="importDropdown" class="dropdown-content">
                                 <a href="#" onclick="baixarTemplate()">📋 Template</a>
@@ -68,7 +67,7 @@
                         <!-- Menu de Backup -->
                         <div class="dropdown">
                             <button class="btn btn-secondary dropdown-toggle" onclick="toggleDropdown('backupDropdown')">
-                                Backup ▼
+                                Backup
                             </button>
                             <div id="backupDropdown" class="dropdown-content">
                                 <a href="#" onclick="backupFuncionarioAtual()">💾 Backup atual</a>
