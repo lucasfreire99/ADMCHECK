@@ -601,9 +601,12 @@ function salvarChecklist() {
     renderizarSidebar();
 }
 
+// Função para atualizar após mudanças nos checkboxes
 function atualizarStatusAposMudanca() {
     if (funcionarioSelecionado) {
         salvarChecklist();
+        renderizarSidebar();
+        renderizarChecklist(); // Recarrega o checklist completo
     }
 }
 
