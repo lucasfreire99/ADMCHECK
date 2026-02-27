@@ -355,12 +355,25 @@ function renderizarChecklist() {
                     grupoAtivo = true;
                 }
                 
-                if (!grupoAtivo) {
-                    const aviso = document.createElement('div');
-                    aviso.className = 'grupo-aviso';
-                    aviso.textContent = `⚠️ Nenhum documento de ${grupo.nome.toLowerCase()} marcado. Os itens abaixo não serão contabilizados no progresso.`;
-                    grupoDiv.appendChild(aviso);
-                }
+                // Substitua este trecho no código existente
+if (!grupoAtivo) {
+    const aviso = document.createElement('div');
+    aviso.className = 'grupo-aviso';
+    
+    // Opção 1: Texto completo com círculo (o CSS já adiciona o ○)
+    aviso.textContent = `Nenhum documento de ${grupo.nome.toLowerCase()} marcado`;
+    
+    // Opção 2: Texto curto (recomendado)
+    // aviso.textContent = `sem documentos de ${grupo.nome.toLowerCase()}`;
+    
+    // Opção 3: Ultra curto
+    // aviso.textContent = `${grupo.nome} vazio`;
+    
+    // Opção 4: Apenas "sem documentos" (mais genérico)
+    // aviso.textContent = `sem documentos`;
+    
+    grupoDiv.appendChild(aviso);
+}
                 
                 grupoDiv.appendChild(grupoTitulo);
                 
