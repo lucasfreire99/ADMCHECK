@@ -1019,16 +1019,43 @@ body {
 
 .grupo-aviso {
     font-size: 0.65rem;
-    color: #5a6775;
+    color: #6b7a8f;
+    background-color: transparent;
     padding: 2px 0 2px 20px;
-    margin: 0;
-    opacity: 0;
-    transition: opacity 0.2s;
-    height: 0;
-    overflow: hidden;
+    margin: 0 0 4px 0;
+    border-left: none;
+    font-style: italic;
+    letter-spacing: 0.2px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    position: relative;
 }
 
-.checklist-grupo:hover .grupo-aviso {
-    opacity: 0.6;
-    height: auto;
+.grupo-aviso::before {
+    content: '○';
+    position: absolute;
+    left: 4px;
+    color: #4f9eff;
+    font-size: 0.6rem;
+    opacity: 0.5;
+}
+
+.grupo-aviso:hover {
+    opacity: 1;
+}
+
+/* Estilo para o título do grupo */
+.grupo-titulo {
+    color: #9aa5b5;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin: 8px 0 4px 0;
+    padding-left: 8px;
+}
+
+/* Container do grupo */
+.checklist-grupo {
+    margin-bottom: 12px;
+    padding-left: 8px;
+    border-left: 1px solid #2a2f38;
 }
